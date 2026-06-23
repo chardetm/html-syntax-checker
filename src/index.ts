@@ -1,6 +1,7 @@
 import { Lexer } from './lexer';
 import { checkHtml } from './parser';
 import { CheckerOptions, CheckerError, Language } from './types';
+export { getErrorTypeName } from './messages';
 
 export function checkHtmlSyntax(code: string, options?: CheckerOptions, lang?: Language): CheckerError[] {
   const chosenLang: Language = lang ?? 'en';

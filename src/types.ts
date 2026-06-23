@@ -3,8 +3,24 @@ export interface Position {
   column: number;
 }
 
+export const CHECKER_ERROR_TYPES = [
+  'PARSE_ERROR',
+  'DOCUMENT_STRUCTURE',
+  'ALLOWED_TAGS',
+  'CASE',
+  'XHTML_SELF_CLOSING',
+  'INVALID_CLOSING_TAG',
+  'ALLOWED_ATTRIBUTES',
+  'MISSING_REQUIRED_ATTRIBUTE',
+  'CLOSING_TAG_MISMATCH',
+  'MISSING_CHARSET',
+  'MISSING_TITLE'
+] as const;
+
+export type CheckerErrorType = (typeof CHECKER_ERROR_TYPES)[number];
+
 export interface CheckerError {
-  type: string;
+  type: CheckerErrorType;
   message: string;
   advice?: string;
   start: Position;

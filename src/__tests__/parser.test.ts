@@ -1,7 +1,16 @@
 import { describe, it, expect } from 'vitest';
-import { checkHtmlSyntax } from '../index';
+import { checkHtmlSyntax, getErrorTypeName } from '../index';
 
 describe('HTML Syntax Checker', () => {
+  describe('Error type names', () => {
+    it('returns localized names for checker error types', () => {
+      expect(getErrorTypeName('PARSE_ERROR', 'en')).toBe('Syntax error');
+      expect(getErrorTypeName('PARSE_ERROR', 'fr')).toBe('Erreur de syntaxe');
+      expect(getErrorTypeName('MISSING_TITLE', 'en')).toBe('Missing title');
+      expect(getErrorTypeName('MISSING_TITLE', 'fr')).toBe('Titre manquant');
+    });
+  });
+
   // ─── Default language: English ──────────────────────────────────────────────
 
   describe('Lexical & Basic Parse Errors', () => {

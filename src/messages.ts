@@ -1,5 +1,56 @@
-import { Language } from './types';
+import { CheckerErrorType, Language } from './types';
 export type { Language };
+
+const errorTypeNames: Record<CheckerErrorType, { en: string; fr: string }> = {
+  PARSE_ERROR: {
+    en: 'Syntax error',
+    fr: 'Erreur de syntaxe'
+  },
+  DOCUMENT_STRUCTURE: {
+    en: 'Document structure error',
+    fr: 'Erreur de structure du document'
+  },
+  ALLOWED_TAGS: {
+    en: 'Tag restriction error',
+    fr: 'Erreur de restriction sur les balises'
+  },
+  CASE: {
+    en: 'Case sensitivity error',
+    fr: 'Erreur de casse'
+  },
+  XHTML_SELF_CLOSING: {
+    en: 'Self-closing syntax error',
+    fr: 'Erreur de syntaxe de fermeture automatique'
+  },
+  INVALID_CLOSING_TAG: {
+    en: 'Invalid closing tag',
+    fr: 'Balise de fermeture invalide'
+  },
+  ALLOWED_ATTRIBUTES: {
+    en: 'Attribute restriction error',
+    fr: 'Erreur de restriction sur les attributs'
+  },
+  MISSING_REQUIRED_ATTRIBUTE: {
+    en: 'Missing required attribute',
+    fr: 'Attribut obligatoire manquant'
+  },
+  CLOSING_TAG_MISMATCH: {
+    en: 'Tag mismatch',
+    fr: 'Correspondance des balises incorrecte'
+  },
+  MISSING_CHARSET: {
+    en: 'Missing charset declaration',
+    fr: 'Déclaration d’encodage manquante'
+  },
+  MISSING_TITLE: {
+    en: 'Missing title',
+    fr: 'Titre manquant'
+  }
+};
+
+export function getErrorTypeName(type: CheckerErrorType, lang: Language): string {
+  return errorTypeNames[type][lang];
+}
 
 export const getMessage = {
   unclosedComment: (lang: Language) => ({
