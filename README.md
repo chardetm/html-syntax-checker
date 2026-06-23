@@ -1,7 +1,13 @@
 # HTML Syntax Checker
 
 A lightweight, zero-dependency HTML syntax checker library written in TypeScript, specifically designed for beginners. 
-While the codebase and options are written in English, the syntax errors and tips are returned in clear, accessible, and beginner-friendly French.
+The syntax errors and tips are returned in clear, accessible, and beginner-friendly language (English by default, French available).
+
+## License
+
+Copyright (c) 2026 Maverick Chardet
+
+This project is licensed under the terms of the MIT license.
 
 ## Features
 
@@ -108,6 +114,18 @@ export interface CheckerError {
 }
 ```
 
-## License
+## Error Output Language
 
-ISC
+By default, the `checkHtmlSyntax` function returns error messages in English. You can change the language by passing the `lang` parameter (third parameter):
+
+```typescript
+import { checkHtmlSyntax } from 'html-syntax-checker';
+
+const code = '<div><span></span></div>';
+
+// English (explicitly)
+const errorsEn = checkHtmlSyntax(code, {}, 'en');
+
+// French
+const errorsFr = checkHtmlSyntax(code, {}, 'fr');
+```
