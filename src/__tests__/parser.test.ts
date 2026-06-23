@@ -445,6 +445,11 @@ describe('HTML Syntax Checker', () => {
   // ─── Custom / Unknown Tag Detection ─────────────────────────────────────────
 
   describe('Custom tag detection (allowCustomTags: false)', () => {
+    it('still allows data-* attributes on standard tags', () => {
+      const errors = checkHtmlSyntax('<div data-state="open"></div>', { allowCustomTags: false });
+      expect(errors.filter(e => e.type === 'ALLOWED_ATTRIBUTES')).toHaveLength(0);
+    });
+
     it('flags a hyphenated custom element', () => {
       const errors = checkHtmlSyntax('<my-widget></my-widget>', { allowCustomTags: false });
       expect(errors).toHaveLength(1);
