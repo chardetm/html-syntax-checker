@@ -1,5 +1,5 @@
 {
-  "name": "html-syntax-checker",
+  "name": "@chardetm/html-syntax-checker",
   "version": "1.0.0",
   "description": "HTML syntax checker for TypeScript beginners with clear French feedback",
   "main": "dist/index.js",
@@ -19,6 +19,7 @@
     "checker",
     "validator",
     "french",
+    "english",
     "beginners",
     "typescript"
   ],
