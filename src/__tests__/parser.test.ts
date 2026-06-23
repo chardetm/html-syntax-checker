@@ -384,4 +384,342 @@ describe('HTML Syntax Checker', () => {
       expect(errors[0].advice).toContain('accessibilité');
     });
   });
+
+  // ─── HTML5 Standard Tag Recognition ─────────────────────────────────────────
+
+  describe('HTML5 Standard Tag Recognition (allowCustomTags: false)', () => {
+    // All tags in the HTML5 standard (non-deprecated) must NOT generate an
+    // ALLOWED_TAGS error when allowCustomTags is false.
+    // Source: https://html.spec.whatwg.org/multipage/indices.html#elements-3
+
+    // Void elements are tested without a closing tag; all others with one.
+    const VOID = new Set([
+      'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input',
+      'link', 'meta', 'source', 'track', 'wbr'
+    ]);
+
+    const ALL_STANDARD_TAGS = [
+      // Document / metadata
+      'html', 'head', 'body', 'title', 'meta', 'link', 'style', 'script', 'noscript', 'base',
+      // Sections
+      'address', 'article', 'aside', 'footer', 'header',
+      'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+      'main', 'nav', 'section',
+      // Grouping content
+      'blockquote', 'dd', 'div', 'dl', 'dt', 'figcaption', 'figure',
+      'hr', 'li', 'menu', 'ol', 'p', 'pre', 'ul',
+      // Text-level semantics
+      'a', 'abbr', 'b', 'bdi', 'bdo', 'br', 'cite', 'code', 'data',
+      'dfn', 'em', 'i', 'kbd', 'mark', 'q',
+      'rp', 'rt', 'ruby', 's', 'samp', 'small', 'span', 'strong',
+      'sub', 'sup', 'time', 'u', 'var', 'wbr',
+      // Embedded content
+      'area', 'audio', 'img', 'map', 'track', 'video',
+      'embed', 'iframe', 'object', 'picture', 'portal', 'source',
+      // Scripting
+      'canvas',
+      // Edits
+      'del', 'ins',
+      // Table content
+      'caption', 'col', 'colgroup', 'table', 'tbody', 'td', 'tfoot', 'th', 'thead', 'tr',
+      // Forms
+      'button', 'datalist', 'fieldset', 'form', 'input', 'label', 'legend',
+      'meter', 'optgroup', 'option', 'output', 'progress', 'select', 'textarea',
+      // Interactive elements
+      'details', 'dialog', 'summary',
+      // Web components
+      'template', 'slot'
+    ];
+
+    it('accepts every HTML5 standard tag without error', () => {
+      for (const tag of ALL_STANDARD_TAGS) {
+        const code = VOID.has(tag) ? `<${tag}>` : `<${tag}></${tag}>`;
+        const errors = checkHtmlSyntax(code, { allowCustomTags: false }).filter(
+          e => e.type === 'ALLOWED_TAGS'
+        );
+        expect(errors, `<${tag}> should be accepted as a standard tag`).toHaveLength(0);
+      }
+    });
+  });
+
+  // ─── Custom / Unknown Tag Detection ─────────────────────────────────────────
+
+  describe('Custom tag detection (allowCustomTags: false)', () => {
+    it('flags a hyphenated custom element', () => {
+      const errors = checkHtmlSyntax('<my-widget></my-widget>', { allowCustomTags: false });
+      expect(errors).toHaveLength(1);
+      expect(errors[0].type).toBe('ALLOWED_TAGS');
+      expect(errors[0].message).toContain('<my-widget>');
+    });
+
+    it('flags a single-word unknown tag', () => {
+      const errors = checkHtmlSyntax('<foobar></foobar>', { allowCustomTags: false });
+      expect(errors).toHaveLength(1);
+      expect(errors[0].type).toBe('ALLOWED_TAGS');
+      expect(errors[0].message).toContain('<foobar>');
+    });
+
+    it('flags multiple unknown tags and counts them correctly', () => {
+      const errors = checkHtmlSyntax(
+        '<alpha></alpha><beta></beta>',
+        { allowCustomTags: false }
+      ).filter(e => e.type === 'ALLOWED_TAGS');
+      expect(errors).toHaveLength(2);
+    });
+
+    it('does NOT flag standard tags as custom', () => {
+      const errors = checkHtmlSyntax('<div><span></span></div>', { allowCustomTags: false });
+      expect(errors.filter(e => e.type === 'ALLOWED_TAGS')).toHaveLength(0);
+    });
+
+    it('does NOT flag a deprecated tag as a custom tag (it has its own category)', () => {
+      // <center> is deprecated, not custom — with allowCustomTags: false it should
+      // NOT produce an ALLOWED_TAGS error (only allowDeprecated_tags: false would).
+      const errors = checkHtmlSyntax('<center>text</center>', { allowCustomTags: false });
+      expect(errors.filter(e => e.type === 'ALLOWED_TAGS')).toHaveLength(0);
+    });
+  });
+
+  // ─── Required Attributes (forceRequiredAttributes) ───────────────────────────
+
+  describe('Required attributes enforcement (forceRequiredAttributes: true)', () => {
+    // REQUIRED_ATTRIBUTES in htmlData.ts:
+    //   img  → ['src', 'alt']
+    //   iframe → ['src']
+    //   link → ['rel']
+    //   area → ['alt']
+
+    it('flags <img> missing both src and alt', () => {
+      const errors = checkHtmlSyntax('<img>', { forceRequiredAttributes: true });
+      const types = errors.map(e => e.type);
+      expect(types.filter(t => t === 'MISSING_REQUIRED_ATTRIBUTE')).toHaveLength(2);
+      const msgs = errors.map(e => e.message);
+      expect(msgs.some(m => m.includes('src'))).toBe(true);
+      expect(msgs.some(m => m.includes('alt'))).toBe(true);
+    });
+
+    it('flags <img> missing only alt when src is present', () => {
+      const errors = checkHtmlSyntax('<img src="photo.jpg">', { forceRequiredAttributes: true });
+      expect(errors).toHaveLength(1);
+      expect(errors[0].type).toBe('MISSING_REQUIRED_ATTRIBUTE');
+      expect(errors[0].message).toContain('alt');
+      // The advice should mention accessibility
+      expect(errors[0].advice).toContain('accessibility');
+    });
+
+    it('flags <img> missing only src when alt is present', () => {
+      const errors = checkHtmlSyntax('<img alt="photo">', { forceRequiredAttributes: true });
+      expect(errors).toHaveLength(1);
+      expect(errors[0].type).toBe('MISSING_REQUIRED_ATTRIBUTE');
+      expect(errors[0].message).toContain('src');
+    });
+
+    it('does NOT flag <img> when both src and alt are present', () => {
+      const errors = checkHtmlSyntax('<img src="x.jpg" alt="desc">', { forceRequiredAttributes: true });
+      expect(errors.filter(e => e.type === 'MISSING_REQUIRED_ATTRIBUTE')).toHaveLength(0);
+    });
+
+    it('flags <iframe> missing src', () => {
+      const errors = checkHtmlSyntax('<iframe></iframe>', { forceRequiredAttributes: true });
+      expect(errors.filter(e => e.type === 'MISSING_REQUIRED_ATTRIBUTE')).toHaveLength(1);
+      expect(errors[0].message).toContain('src');
+    });
+
+    it('does NOT flag <iframe> when src is present', () => {
+      const errors = checkHtmlSyntax('<iframe src="page.html"></iframe>', { forceRequiredAttributes: true });
+      expect(errors.filter(e => e.type === 'MISSING_REQUIRED_ATTRIBUTE')).toHaveLength(0);
+    });
+
+    it('flags <link> missing rel', () => {
+      const errors = checkHtmlSyntax('<link href="style.css">', { forceRequiredAttributes: true });
+      expect(errors.filter(e => e.type === 'MISSING_REQUIRED_ATTRIBUTE')).toHaveLength(1);
+      expect(errors[0].message).toContain('rel');
+    });
+
+    it('does NOT flag <link> when rel is present', () => {
+      const errors = checkHtmlSyntax('<link rel="stylesheet" href="style.css">', { forceRequiredAttributes: true });
+      expect(errors.filter(e => e.type === 'MISSING_REQUIRED_ATTRIBUTE')).toHaveLength(0);
+    });
+
+    it('flags <area> missing alt', () => {
+      const errors = checkHtmlSyntax('<area href="page.html">', { forceRequiredAttributes: true });
+      expect(errors.filter(e => e.type === 'MISSING_REQUIRED_ATTRIBUTE')).toHaveLength(1);
+      expect(errors[0].message).toContain('alt');
+    });
+
+    it('does NOT flag <area> when alt is present', () => {
+      const errors = checkHtmlSyntax('<area href="page.html" alt="link">', { forceRequiredAttributes: true });
+      expect(errors.filter(e => e.type === 'MISSING_REQUIRED_ATTRIBUTE')).toHaveLength(0);
+    });
+
+    it('does NOT flag tags without required-attribute rules', () => {
+      const errors = checkHtmlSyntax('<div id="main"><p>Hello</p></div>', { forceRequiredAttributes: true });
+      expect(errors.filter(e => e.type === 'MISSING_REQUIRED_ATTRIBUTE')).toHaveLength(0);
+    });
+  });
+
+  // ─── Tag & Attribute Casing Rules ────────────────────────────────────────────
+
+  describe('Casing rules for tags and attributes', () => {
+    // ── Tags ──────────────────────────────────────────────────────────────────
+
+    describe('Tag casing — opening tags', () => {
+      it('allows lowercase opening tag when allowLowercaseTags: true', () => {
+        const errors = checkHtmlSyntax('<div></div>', { allowLowercaseTags: true, allowUppercaseTags: false, allowMixedcaseTags: false });
+        expect(errors.filter(e => e.type === 'CASE')).toHaveLength(0);
+      });
+
+      it('flags lowercase opening tag when allowLowercaseTags: false', () => {
+        const errors = checkHtmlSyntax('<div></div>', { allowLowercaseTags: false, allowUppercaseTags: true, allowMixedcaseTags: false });
+        const caseErrors = errors.filter(e => e.type === 'CASE');
+        // Both <div> (open) and </div> (close) are lowercase → 2 CASE errors
+        expect(caseErrors.length).toBeGreaterThanOrEqual(1);
+        expect(caseErrors[0].message).toContain('lowercase is forbidden');
+      });
+
+      it('allows uppercase opening tag when allowUppercaseTags: true', () => {
+        const errors = checkHtmlSyntax('<DIV></DIV>', { allowLowercaseTags: false, allowUppercaseTags: true, allowMixedcaseTags: false });
+        expect(errors.filter(e => e.type === 'CASE')).toHaveLength(0);
+      });
+
+      it('flags uppercase opening tag when allowUppercaseTags: false', () => {
+        const errors = checkHtmlSyntax('<DIV></DIV>', { allowLowercaseTags: true, allowUppercaseTags: false, allowMixedcaseTags: false });
+        const caseErrors = errors.filter(e => e.type === 'CASE');
+        expect(caseErrors.length).toBeGreaterThanOrEqual(1);
+        expect(caseErrors[0].message).toContain('uppercase is forbidden');
+      });
+
+      it('allows mixed-case opening tag when allowMixedcaseTags: true', () => {
+        const errors = checkHtmlSyntax('<DiV></DiV>', { allowLowercaseTags: false, allowUppercaseTags: false, allowMixedcaseTags: true });
+        expect(errors.filter(e => e.type === 'CASE')).toHaveLength(0);
+      });
+
+      it('flags mixed-case opening tag when allowMixedcaseTags: false', () => {
+        const errors = checkHtmlSyntax('<DiV></DiV>', { allowLowercaseTags: true, allowUppercaseTags: true, allowMixedcaseTags: false });
+        const caseErrors = errors.filter(e => e.type === 'CASE');
+        expect(caseErrors.length).toBeGreaterThanOrEqual(1);
+        expect(caseErrors[0].message).toContain('mixed casing');
+      });
+    });
+
+    describe('Tag casing — closing tags', () => {
+      it('flags lowercase closing tag when allowLowercaseTags: false', () => {
+        // Use uppercase opening (allowed) + lowercase closing (forbidden)
+        const errors = checkHtmlSyntax('<DIV></div>', { allowLowercaseTags: false, allowUppercaseTags: true, allowMixedcaseTags: false });
+        const caseErrors = errors.filter(e => e.type === 'CASE');
+        expect(caseErrors).toHaveLength(1);
+        expect(caseErrors[0].message).toContain('</div>');
+        expect(caseErrors[0].message).toContain('lowercase is forbidden');
+      });
+
+      it('flags uppercase closing tag when allowUppercaseTags: false', () => {
+        const errors = checkHtmlSyntax('<div></DIV>', { allowLowercaseTags: true, allowUppercaseTags: false, allowMixedcaseTags: false });
+        const caseErrors = errors.filter(e => e.type === 'CASE');
+        expect(caseErrors).toHaveLength(1);
+        expect(caseErrors[0].message).toContain('</DIV>');
+        expect(caseErrors[0].message).toContain('uppercase is forbidden');
+      });
+
+      it('flags mixed-case closing tag when allowMixedcaseTags: false', () => {
+        const errors = checkHtmlSyntax('<DIV></dIv>', { allowLowercaseTags: true, allowUppercaseTags: true, allowMixedcaseTags: false });
+        const caseErrors = errors.filter(e => e.type === 'CASE');
+        expect(caseErrors).toHaveLength(1);
+        expect(caseErrors[0].message).toContain('</dIv>');
+        expect(caseErrors[0].message).toContain('mixed casing');
+      });
+    });
+
+    describe('Tag casing — default (all casing allowed)', () => {
+      it('accepts lowercase, uppercase, and mixed-case tags by default', () => {
+        const code = '<div></div><DIV></DIV><DiV></DiV>';
+        const errors = checkHtmlSyntax(code);
+        expect(errors.filter(e => e.type === 'CASE')).toHaveLength(0);
+      });
+    });
+
+    // ── Attributes ────────────────────────────────────────────────────────────
+
+    describe('Attribute casing', () => {
+      it('allows lowercase attributes when allowLowercaseAttributes: true', () => {
+        const errors = checkHtmlSyntax('<div class="x"></div>', {
+          allowLowercaseAttributes: true,
+          allowUppercaseAttributes: false,
+          allowMixedcaseAttributes: false
+        });
+        expect(errors.filter(e => e.type === 'CASE')).toHaveLength(0);
+      });
+
+      it('flags lowercase attribute when allowLowercaseAttributes: false', () => {
+        const errors = checkHtmlSyntax('<div class="x"></div>', {
+          allowLowercaseAttributes: false,
+          allowUppercaseAttributes: true,
+          allowMixedcaseAttributes: false
+        });
+        const caseErrors = errors.filter(e => e.type === 'CASE');
+        expect(caseErrors).toHaveLength(1);
+        expect(caseErrors[0].message).toContain('class');
+        // The message body says "must not be in lowercase"
+        expect(caseErrors[0].message).toContain('lowercase');
+      });
+
+      it('allows uppercase attribute when allowUppercaseAttributes: true', () => {
+        const errors = checkHtmlSyntax('<div CLASS="x"></div>', {
+          allowLowercaseAttributes: false,
+          allowUppercaseAttributes: true,
+          allowMixedcaseAttributes: false
+        });
+        expect(errors.filter(e => e.type === 'CASE')).toHaveLength(0);
+      });
+
+      it('flags uppercase attribute when allowUppercaseAttributes: false', () => {
+        const errors = checkHtmlSyntax('<div CLASS="x"></div>', {
+          allowLowercaseAttributes: true,
+          allowUppercaseAttributes: false,
+          allowMixedcaseAttributes: false
+        });
+        const caseErrors = errors.filter(e => e.type === 'CASE');
+        expect(caseErrors).toHaveLength(1);
+        expect(caseErrors[0].message).toContain('CLASS');
+        expect(caseErrors[0].message).toContain('uppercase');
+      });
+
+      it('allows mixed-case attribute when allowMixedcaseAttributes: true', () => {
+        const errors = checkHtmlSyntax('<div tabIndex="0"></div>', {
+          allowLowercaseAttributes: false,
+          allowUppercaseAttributes: false,
+          allowMixedcaseAttributes: true
+        });
+        expect(errors.filter(e => e.type === 'CASE')).toHaveLength(0);
+      });
+
+      it('flags mixed-case attribute when allowMixedcaseAttributes: false', () => {
+        const errors = checkHtmlSyntax('<div tabIndex="0"></div>', {
+          allowLowercaseAttributes: true,
+          allowUppercaseAttributes: true,
+          allowMixedcaseAttributes: false
+        });
+        const caseErrors = errors.filter(e => e.type === 'CASE');
+        expect(caseErrors).toHaveLength(1);
+        expect(caseErrors[0].message).toContain('tabIndex');
+        expect(caseErrors[0].message).toContain('mixed casing');
+      });
+
+      it('flags multiple attributes with wrong casing independently', () => {
+        // Both CLASS and ID are uppercase — should produce 2 CASE errors
+        const errors = checkHtmlSyntax('<div CLASS="x" ID="y"></div>', {
+          allowLowercaseAttributes: true,
+          allowUppercaseAttributes: false,
+          allowMixedcaseAttributes: false
+        });
+        const caseErrors = errors.filter(e => e.type === 'CASE');
+        expect(caseErrors).toHaveLength(2);
+      });
+
+      it('accepts all casing by default', () => {
+        const code = '<div class="a" CLASS="b" tabIndex="0"></div>';
+        const errors = checkHtmlSyntax(code);
+        expect(errors.filter(e => e.type === 'CASE')).toHaveLength(0);
+      });
+    });
+  });
 });
