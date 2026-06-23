@@ -30,15 +30,15 @@ export interface CheckerError {
 export type Language = 'en' | 'fr';
 
 export interface CheckerOptions {
-  allowedTags?: string[];
-  forbiddenTags?: string[];
+  allowedTags?: string[] | null;
+  forbiddenTags?: string[] | null;
   allowDeprecated_tags?: boolean;
   allowCustomTags?: boolean;
   xhtmlSelfClosing?: 'allowed' | 'forced' | 'forbidden';
   allowLowercaseTags?: boolean;
   allowUppercaseTags?: boolean;
   allowMixedcaseTags?: boolean;
-  forbiddenAttributes?: string[];
+  forbiddenAttributes?: string[] | null;
   forceRequiredAttributes?: boolean;
   allowDeprecatedAttributes?: boolean;
   allowCustomAttributes?: boolean;

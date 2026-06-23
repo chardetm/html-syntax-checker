@@ -67,36 +67,36 @@ The `checkHtmlSyntax` function takes an optional configuration object:
 ```typescript
 export interface CheckerOptions {
   // Tags whitelist/blacklist (mutually exclusive)
-  allowedTags?: string[];
-  forbiddenTags?: string[];
+  allowedTags?: string[];                // Default: null
+  forbiddenTags?: string[];              // Default: null
 
   // Tag classification
-  allowDeprecated_tags?: boolean; // Allowed by default. Set to false to reject tags like <center>, <font>, etc.
-  allowCustomTags?: boolean;      // Allowed by default. Set to false to reject non-standard tags.
+  allowDeprecated_tags?: boolean;        // Default: true. Set to false to reject tags like <center>, <font>, etc.
+  allowCustomTags?: boolean;             // Default: false. Set to true to allow non-standard tags.
 
   // XHTML syntax
-  xhtmlSelfClosing?: 'allowed' | 'forced' | 'forbidden'; // 'allowed' by default.
+  xhtmlSelfClosing?: 'allowed' | 'forced' | 'forbidden'; // Default: 'allowed'
 
   // Tag casing
-  allowLowercaseTags?: boolean;   // true by default
-  allowUppercaseTags?: boolean;   // true by default
-  allowMixedcaseTags?: boolean;   // true by default
+  allowLowercaseTags?: boolean;          // Default: true
+  allowUppercaseTags?: boolean;          // Default: true
+  allowMixedcaseTags?: boolean;          // Default: false
 
   // Attributes
-  forbiddenAttributes?: string[]; // Optional blacklist of attribute names
-  forceRequiredAttributes?: boolean; // If true, checks if elements have required attributes (e.g. src & alt on img)
-  allowDeprecatedAttributes?: boolean; // true by default. Set to false to reject attributes like align, bgcolor, etc.
-  allowCustomAttributes?: boolean; // true by default. Set to false to reject non-standard attributes (not starting with data-).
+  forbiddenAttributes?: string[];        // Default: []. Optional blacklist of attribute names.
+  forceRequiredAttributes?: boolean;     // Default: true. If true, checks if elements have required attributes (e.g. src & alt on img).
+  allowDeprecatedAttributes?: boolean;   // Default: true. Set to false to reject attributes like align, bgcolor, etc.
+  allowCustomAttributes?: boolean;       // Default: false. Set to true to allow non-standard attributes (not starting with data-).
 
   // Attribute casing
-  allowLowercaseAttributes?: boolean; // true by default
-  allowUppercaseAttributes?: boolean; // true by default
-  allowMixedcaseAttributes?: boolean; // true by default
+  allowLowercaseAttributes?: boolean;    // Default: true
+  allowUppercaseAttributes?: boolean;    // Default: true
+  allowMixedcaseAttributes?: boolean;    // Default: false
 
   // Structure
-  checkFullStructure?: boolean; // If true, validates DOCTYPE, html, head, and body structure.
-  checkCharset?: boolean;       // If true, requires <meta charset="..."> in <head>
-  checkTitle?: boolean;         // If true, requires non-empty <title> in <head>
+  checkFullStructure?: boolean;          // Default: false. If true, validates DOCTYPE, html, head, and body structure.
+  checkCharset?: boolean;                // Default: false. If true, requires <meta charset="..."> in <head>.
+  checkTitle?: boolean;                  // Default: false. If true, requires non-empty <title> in <head>.
 }
 ```
 
@@ -107,8 +107,8 @@ Each detected error has the following structure:
 ```typescript
 export interface CheckerError {
   type: string;       // PARSE_ERROR, ALLOWED_TAGS, CASE, CLOSING_TAG_MISMATCH, INVALID_CLOSING_TAG, DOCUMENT_STRUCTURE, MISSING_REQUIRED_ATTRIBUTE, MISSING_CHARSET, MISSING_TITLE...
-  message: string;    // Clear error message in French
-  advice?: string;    // Optional tip/advice in French to fix the error
+  message: string;    // Clear error message in the chosen language (English by default)
+  advice?: string;    // Optional tip/advice in the chosen language (English by default) to fix the error
   start: Position;    // { line: number, column: number } (1-indexed)
   end: Position;      // { line: number, column: number } (1-indexed)
 }
@@ -116,7 +116,7 @@ export interface CheckerError {
 
 ## Error Output Language
 
-By default, the `checkHtmlSyntax` function returns error messages in English. You can change the language by passing the `lang` parameter (third parameter):
+By default, the `checkHtmlSyntax` function returns error messages and advice in English. You can change the language by passing the `lang` parameter (third parameter):
 
 ```typescript
 import { checkHtmlSyntax } from 'html-syntax-checker';

@@ -11,31 +11,38 @@ import {
   DEPRECATED_ATTRIBUTES
 } from './htmlData';
 
-export function checkHtml(tokens: Token[], options: CheckerOptions = {}, lang: Language = 'en'): CheckerError[] {
+const DEFAULT_OPTIONS: Required<CheckerOptions> = {
+  allowedTags: null,
+  forbiddenTags: null,
+  allowDeprecated_tags: true,
+  allowCustomTags: false,
+  xhtmlSelfClosing: 'allowed',
+  allowLowercaseTags: true,
+  allowUppercaseTags: true,
+  allowMixedcaseTags: false,
+  forbiddenAttributes: [],
+  forceRequiredAttributes: true,
+  allowDeprecatedAttributes: true,
+  allowCustomAttributes: false,
+  allowLowercaseAttributes: true,
+  allowUppercaseAttributes: true,
+  allowMixedcaseAttributes: false,
+  checkFullStructure: false,
+  checkCharset: false,
+  checkTitle: false
+};
+
+export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lang: Language = 'en'): CheckerError[] {
   const errors: CheckerError[] = [];
 
   // 1. Validate Options Compatibility
-  if (options.allowedTags && options.forbiddenTags) {
+  if (userOptions.allowedTags && userOptions.forbiddenTags) {
     throw new Error(getMessage.incompatibleOptions(lang));
   }
 
+
   // 2. Resolve default options
-  const allowDeprecated_tags = options.allowDeprecated_tags ?? true;
-  const allowCustomTags = options.allowCustomTags ?? true;
-  const xhtmlSelfClosing = options.xhtmlSelfClosing ?? 'allowed';
-  const allowLowercaseTags = options.allowLowercaseTags ?? true;
-  const allowUppercaseTags = options.allowUppercaseTags ?? true;
-  const allowMixedcaseTags = options.allowMixedcaseTags ?? true;
-  const forbiddenAttributes = options.forbiddenAttributes ?? [];
-  const forceRequiredAttributes = options.forceRequiredAttributes ?? false;
-  const allowDeprecatedAttributes = options.allowDeprecatedAttributes ?? true;
-  const allowCustomAttributes = options.allowCustomAttributes ?? true;
-  const allowLowercaseAttributes = options.allowLowercaseAttributes ?? true;
-  const allowUppercaseAttributes = options.allowUppercaseAttributes ?? true;
-  const allowMixedcaseAttributes = options.allowMixedcaseAttributes ?? true;
-  const checkFullStructure = options.checkFullStructure ?? false;
-  const checkCharset = options.checkCharset ?? false;
-  const checkTitle = options.checkTitle ?? false;
+  const options: Required<CheckerOptions> = { ...DEFAULT_OPTIONS, ...userOptions };
 
   // 3. Collect lex errors
   for (const token of tokens) {
@@ -53,7 +60,7 @@ export function checkHtml(tokens: Token[], options: CheckerOptions = {}, lang: L
   const validTokens = tokens.filter(t => t.type !== 'LEX_ERROR');
 
   // 4. Doctype check (for structure)
-  if (checkFullStructure) {
+  if (options.checkFullStructure) {
     const nonTriviaTokens = validTokens.filter(
       t => t.type !== 'COMMENT' && (t.type !== 'TEXT' || t.value.trim() !== '')
     );
@@ -113,7 +120,7 @@ export function checkHtml(tokens: Token[], options: CheckerOptions = {}, lang: L
       const insideBody = stack.some(x => x.name.toLowerCase() === 'body');
 
       // A. Structure placement checks
-      if (checkFullStructure) {
+      if (options.checkFullStructure) {
         if (tagLower === 'html') {
           htmlStartCount++;
         } else if (tagLower === 'head') {
@@ -233,7 +240,7 @@ export function checkHtml(tokens: Token[], options: CheckerOptions = {}, lang: L
           });
         }
       } else {
-        if (isDeprecated && allowDeprecated_tags === false) {
+        if (isDeprecated && options.allowDeprecated_tags === false) {
           const { message, advice } = getMessage.tagDeprecated(lang, name);
           errors.push({
             type: 'ALLOWED_TAGS',
@@ -243,7 +250,7 @@ export function checkHtml(tokens: Token[], options: CheckerOptions = {}, lang: L
             end: token.end
           });
         }
-        if (isCustom && allowCustomTags === false) {
+        if (isCustom && options.allowCustomTags === false) {
           const { message, advice } = getMessage.customTagNotAllowed(lang, name);
           errors.push({
             type: 'ALLOWED_TAGS',
@@ -260,7 +267,7 @@ export function checkHtml(tokens: Token[], options: CheckerOptions = {}, lang: L
       const isAllUpper = name === name.toUpperCase();
       const isMixed = !isAllLower && !isAllUpper;
 
-      if (isAllLower && allowLowercaseTags === false) {
+      if (isAllLower && options.allowLowercaseTags === false) {
         const { message, advice } = getMessage.tagCaseLowercaseForbidden(lang, name);
         errors.push({
           type: 'CASE',
@@ -269,7 +276,7 @@ export function checkHtml(tokens: Token[], options: CheckerOptions = {}, lang: L
           start: token.start,
           end: token.end
         });
-      } else if (isAllUpper && allowUppercaseTags === false) {
+      } else if (isAllUpper && options.allowUppercaseTags === false) {
         const { message, advice } = getMessage.tagCaseUppercaseForbidden(lang, name);
         errors.push({
           type: 'CASE',
@@ -278,7 +285,7 @@ export function checkHtml(tokens: Token[], options: CheckerOptions = {}, lang: L
           start: token.start,
           end: token.end
         });
-      } else if (isMixed && allowMixedcaseTags === false) {
+      } else if (isMixed && options.allowMixedcaseTags === false) {
         const { message, advice } = getMessage.tagCaseMixedForbidden(lang, name);
         errors.push({
           type: 'CASE',
@@ -292,7 +299,7 @@ export function checkHtml(tokens: Token[], options: CheckerOptions = {}, lang: L
       // D. XHTML self-closing on void / normal elements
       const isVoid = VOID_TAGS.has(tagLower);
       if (isVoid) {
-        if (xhtmlSelfClosing === 'forced' && !token.isSelfClosing) {
+        if (options.xhtmlSelfClosing === 'forced' && !token.isSelfClosing) {
           const { message, advice } = getMessage.voidElementMustSelfClose(lang, name);
           errors.push({
             type: 'XHTML_SELF_CLOSING',
@@ -301,7 +308,7 @@ export function checkHtml(tokens: Token[], options: CheckerOptions = {}, lang: L
             start: token.start,
             end: token.end
           });
-        } else if (xhtmlSelfClosing === 'forbidden' && token.isSelfClosing) {
+        } else if (options.xhtmlSelfClosing === 'forbidden' && token.isSelfClosing) {
           const { message, advice } = getMessage.voidElementMustNotSelfClose(lang, name);
           errors.push({
             type: 'XHTML_SELF_CLOSING',
@@ -363,7 +370,7 @@ export function checkHtml(tokens: Token[], options: CheckerOptions = {}, lang: L
         const isAttrUpper = attrName === attrName.toUpperCase();
         const isAttrMixed = !isAttrLower && !isAttrUpper;
 
-        if (isAttrLower && allowLowercaseAttributes === false) {
+        if (isAttrLower && options.allowLowercaseAttributes === false) {
           const { message, advice } = getMessage.attributeLowercaseForbidden(lang, attrName, name);
           errors.push({
             type: 'CASE',
@@ -372,7 +379,7 @@ export function checkHtml(tokens: Token[], options: CheckerOptions = {}, lang: L
             start: attr.nameStart,
             end: attr.nameEnd
           });
-        } else if (isAttrUpper && allowUppercaseAttributes === false) {
+        } else if (isAttrUpper && options.allowUppercaseAttributes === false) {
           const { message, advice } = getMessage.attributeUppercaseForbidden(lang, attrName, name);
           errors.push({
             type: 'CASE',
@@ -381,7 +388,7 @@ export function checkHtml(tokens: Token[], options: CheckerOptions = {}, lang: L
             start: attr.nameStart,
             end: attr.nameEnd
           });
-        } else if (isAttrMixed && allowMixedcaseAttributes === false) {
+        } else if (isAttrMixed && options.allowMixedcaseAttributes === false) {
           const { message, advice } = getMessage.attributeMixedForbidden(lang, attrName, name);
           errors.push({
             type: 'CASE',
@@ -393,7 +400,7 @@ export function checkHtml(tokens: Token[], options: CheckerOptions = {}, lang: L
         }
 
         // Forbidden
-        const isAttrForbidden = forbiddenAttributes.some(a => a.toLowerCase() === attrNameLower);
+        const isAttrForbidden = (options.forbiddenAttributes || []).some(a => a.toLowerCase() === attrNameLower);
         if (isAttrForbidden) {
           const { message, advice } = getMessage.attributeForbidden(lang, attrName, name);
           errors.push({
@@ -406,7 +413,7 @@ export function checkHtml(tokens: Token[], options: CheckerOptions = {}, lang: L
         } else {
           // Deprecated
           const isDeprecatedAttr = DEPRECATED_ATTRIBUTES.has(attrNameLower);
-          if (isDeprecatedAttr && allowDeprecatedAttributes === false) {
+          if (isDeprecatedAttr && options.allowDeprecatedAttributes === false) {
             const { message, advice } = getMessage.attributeDeprecated(lang, attrName);
             errors.push({
               type: 'ALLOWED_ATTRIBUTES',
@@ -421,7 +428,7 @@ export function checkHtml(tokens: Token[], options: CheckerOptions = {}, lang: L
             const isTagSpecificStd = ELEMENT_STANDARD_ATTRIBUTES[tagLower]?.includes(attrNameLower) ?? false;
             const isDataAttr = attrNameLower.startsWith('data-');
 
-            if (!isGlobalStd && !isTagSpecificStd && !isDataAttr && !isDeprecatedAttr && allowCustomAttributes === false) {
+            if (!isGlobalStd && !isTagSpecificStd && !isDataAttr && !isDeprecatedAttr && options.allowCustomAttributes === false) {
               const { message, advice } = getMessage.attributeCustomNotAllowed(lang, attrName, name, attrNameLower);
               errors.push({
                 type: 'ALLOWED_ATTRIBUTES',
@@ -436,7 +443,7 @@ export function checkHtml(tokens: Token[], options: CheckerOptions = {}, lang: L
       }
 
       // Required Attributes
-      if (forceRequiredAttributes) {
+      if (options.forceRequiredAttributes) {
         const reqs = REQUIRED_ATTRIBUTES[tagLower];
         if (reqs) {
           for (const req of reqs) {
@@ -468,7 +475,7 @@ export function checkHtml(tokens: Token[], options: CheckerOptions = {}, lang: L
       const tagLower = name.toLowerCase();
       const isVoid = VOID_TAGS.has(tagLower);
 
-      if (checkFullStructure) {
+      if (options.checkFullStructure) {
         if (tagLower === 'html') htmlCloseCount++;
         else if (tagLower === 'head') headCloseCount++;
         else if (tagLower === 'body') bodyCloseCount++;
@@ -491,7 +498,7 @@ export function checkHtml(tokens: Token[], options: CheckerOptions = {}, lang: L
       const isAllUpper = name === name.toUpperCase();
       const isMixed = !isAllLower && !isAllUpper;
 
-      if (isAllLower && allowLowercaseTags === false) {
+      if (isAllLower && options.allowLowercaseTags === false) {
         const { message, advice } = getMessage.closingTagCaseLowercaseForbidden(lang, name);
         errors.push({
           type: 'CASE',
@@ -500,7 +507,7 @@ export function checkHtml(tokens: Token[], options: CheckerOptions = {}, lang: L
           start: token.start,
           end: token.end
         });
-      } else if (isAllUpper && allowUppercaseTags === false) {
+      } else if (isAllUpper && options.allowUppercaseTags === false) {
         const { message, advice } = getMessage.closingTagCaseUppercaseForbidden(lang, name);
         errors.push({
           type: 'CASE',
@@ -509,7 +516,7 @@ export function checkHtml(tokens: Token[], options: CheckerOptions = {}, lang: L
           start: token.start,
           end: token.end
         });
-      } else if (isMixed && allowMixedcaseTags === false) {
+      } else if (isMixed && options.allowMixedcaseTags === false) {
         const { message, advice } = getMessage.closingTagCaseMixedForbidden(lang, name);
         errors.push({
           type: 'CASE',
@@ -573,7 +580,7 @@ export function checkHtml(tokens: Token[], options: CheckerOptions = {}, lang: L
         const insideHead = stack.some(x => x.name.toLowerCase() === 'head');
         const insideBody = stack.some(x => x.name.toLowerCase() === 'body');
 
-        if (checkFullStructure) {
+        if (options.checkFullStructure) {
           if (!insideHtml) {
             const hasNoTagsInStack = stack.length === 0;
             if (hasNoTagsInStack) {
@@ -623,7 +630,7 @@ export function checkHtml(tokens: Token[], options: CheckerOptions = {}, lang: L
   }
 
   // 6. Post-pass full structure checks (missing html/head/body counts)
-  if (checkFullStructure) {
+  if (options.checkFullStructure) {
     if (htmlStartCount === 0) {
       const { message, advice } = getMessage.missingHtmlTag(lang);
       errors.push({
@@ -686,7 +693,7 @@ export function checkHtml(tokens: Token[], options: CheckerOptions = {}, lang: L
   }
 
   // 7. Charset and Title checks (missing checks)
-  if (checkCharset && !hasCharset) {
+  if (options.checkCharset && !hasCharset) {
     const { message, advice } = getMessage.missingCharset(lang);
     errors.push({
       type: 'MISSING_CHARSET',
@@ -697,7 +704,7 @@ export function checkHtml(tokens: Token[], options: CheckerOptions = {}, lang: L
     });
   }
 
-  if (checkTitle && (!hasTitle || !titleHasContent)) {
+  if (options.checkTitle && (!hasTitle || !titleHasContent)) {
     const { message, advice } = getMessage.missingTitle(lang);
     errors.push({
       type: 'MISSING_TITLE',
