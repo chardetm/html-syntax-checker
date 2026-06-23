@@ -1,6 +1,6 @@
 {
   "name": "@chardetm/html-syntax-checker",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "HTML syntax checker for TypeScript beginners with clear French feedback",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -9,9 +9,10 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "rimraf dist && tsc",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "clean": "rimraf dist"
   },
   "keywords": [
     "html",
@@ -26,6 +27,7 @@
   "author": "Maverick Chardet",
   "license": "MIT",
   "devDependencies": {
+    "rimraf": "^6.1.3",
     "typescript": "6.0.3",
     "vitest": "4.1.9"
   }
