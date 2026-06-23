@@ -541,14 +541,20 @@ describe('HTML Syntax Checker', () => {
       expect(errors.filter(e => e.type === 'MISSING_REQUIRED_ATTRIBUTE')).toHaveLength(0);
     });
 
-    it('flags <area> missing alt', () => {
-      const errors = checkHtmlSyntax('<area href="page.html">', { forceRequiredAttributes: true });
+    it('flags <track> missing src', () => {
+      const errors = checkHtmlSyntax('<track kind="captions">', { forceRequiredAttributes: true });
       expect(errors.filter(e => e.type === 'MISSING_REQUIRED_ATTRIBUTE')).toHaveLength(1);
-      expect(errors[0].message).toContain('alt');
+      expect(errors[0].message).toContain('src');
     });
 
-    it('does NOT flag <area> when alt is present', () => {
-      const errors = checkHtmlSyntax('<area href="page.html" alt="link">', { forceRequiredAttributes: true });
+    it('flags <track> missing kind', () => {
+      const errors = checkHtmlSyntax('<track src="captions.vtt">', { forceRequiredAttributes: true });
+      expect(errors.filter(e => e.type === 'MISSING_REQUIRED_ATTRIBUTE')).toHaveLength(1);
+      expect(errors[0].message).toContain('kind');
+    });
+
+    it('does NOT flag <track> when src and kind are present', () => {
+      const errors = checkHtmlSyntax('<track src="captions.vtt" kind="captions">', { forceRequiredAttributes: true });
       expect(errors.filter(e => e.type === 'MISSING_REQUIRED_ATTRIBUTE')).toHaveLength(0);
     });
 

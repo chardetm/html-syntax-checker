@@ -35,7 +35,7 @@ export const REQUIRED_ATTRIBUTES: Record<string, string[]> = {
   'img': ['src', 'alt'],
   'iframe': ['src'],
   'link': ['rel'],
-  'area': ['alt']
+  'track': ['src', 'kind'],
 };
 
 // Global standard attributes (valid on all elements)
