@@ -1,15 +1,15 @@
 import { describe, it, expect } from "vitest";
-import { checkHtmlSyntax, getErrorTypeName } from "../index";
+import { checkHtmlSyntax, getHtmlErrorTypeName } from "../index";
 
 describe("HTML Syntax Checker", () => {
   describe("Error type names", () => {
     it("returns localized names for checker error types", () => {
-      expect(getErrorTypeName("PARSE_ERROR", "en")).toBe("Syntax error");
-      expect(getErrorTypeName("PARSE_ERROR", "fr")).toBe("Erreur de syntaxe");
-      expect(getErrorTypeName("MISSING_TITLE", "en")).toBe("Missing title");
-      expect(getErrorTypeName("MISSING_TITLE", "fr")).toBe("Titre manquant");
-      expect(getErrorTypeName("DUPLICATE_ID", "en")).toBe("Duplicate ID");
-      expect(getErrorTypeName("DUPLICATE_ID", "fr")).toBe("Identifiant en double");
+      expect(getHtmlErrorTypeName("PARSE_ERROR", "en")).toBe("Syntax error");
+      expect(getHtmlErrorTypeName("PARSE_ERROR", "fr")).toBe("Erreur de syntaxe");
+      expect(getHtmlErrorTypeName("MISSING_TITLE", "en")).toBe("Missing title");
+      expect(getHtmlErrorTypeName("MISSING_TITLE", "fr")).toBe("Titre manquant");
+      expect(getHtmlErrorTypeName("DUPLICATE_ID", "en")).toBe("Duplicate ID");
+      expect(getHtmlErrorTypeName("DUPLICATE_ID", "fr")).toBe("Identifiant en double");
     });
   });
 

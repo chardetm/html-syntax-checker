@@ -1,7 +1,7 @@
-import { CheckerErrorType, Language } from '../types';
+import { HTMLCheckerErrorType, Language } from '../types';
 export type { Language };
 
-const errorTypeNames: Record<CheckerErrorType, { en: string; fr: string }> = {
+const errorTypeNames: Record<HTMLCheckerErrorType, { en: string; fr: string }> = {
   PARSE_ERROR: {
     en: 'Syntax error',
     fr: 'Erreur de syntaxe'
@@ -80,7 +80,7 @@ const errorTypeNames: Record<CheckerErrorType, { en: string; fr: string }> = {
   }
 };
 
-export function getErrorTypeName(type: CheckerErrorType, lang: Language): string {
+export function getHtmlErrorTypeName(type: HTMLCheckerErrorType, lang: Language): string {
   return errorTypeNames[type][lang];
 }
 

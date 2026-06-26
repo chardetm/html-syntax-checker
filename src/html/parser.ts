@@ -1,5 +1,5 @@
-import { Token } from './lexer';
-import { CheckerOptions, CheckerError, Language } from '../types';
+import { Token, Lexer } from './lexer';
+import { HTMLCheckerOptions, HTMLCheckerError, Language } from '../types';
 import { getMessage } from './messages';
 import { checkCssSyntax } from '../css/parser';
 import {
@@ -12,7 +12,7 @@ import {
   DEPRECATED_ATTRIBUTES
 } from './htmlData';
 
-const DEFAULT_OPTIONS: Required<CheckerOptions> = {
+const DEFAULT_OPTIONS: Required<HTMLCheckerOptions> = {
   allowedTags: null,
   forbiddenTags: null,
   allowDeprecatedTags: true,
@@ -39,8 +39,8 @@ const DEFAULT_OPTIONS: Required<CheckerOptions> = {
   cssOptions: {}
 };
 
-export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lang: Language = 'en'): CheckerError[] {
-  const errors: CheckerError[] = [];
+export function checkHtml(tokens: Token[], userOptions: HTMLCheckerOptions = {}, lang: Language = 'en'): HTMLCheckerError[] {
+  const errors: HTMLCheckerError[] = [];
   const seenIds = new Map<string, { line: number }>();
 
   // Form rule tracking variables
@@ -82,7 +82,7 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
   }
 
   // 2. Resolve default options
-  const options: Required<CheckerOptions> = { ...DEFAULT_OPTIONS, ...userOptions };
+  const options: Required<HTMLCheckerOptions> = { ...DEFAULT_OPTIONS, ...userOptions };
 
   // 3. Collect lex errors
   for (const token of tokens) {
@@ -920,7 +920,7 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
       if (topTagName === 'style' && token.value.trim() !== '') {
         const cssErrors = checkCssSyntax(token.value, options.cssOptions, lang);
         for (const cssErr of cssErrors) {
-          let mappedLoc: CheckerError['location'] = undefined;
+          let mappedLoc: HTMLCheckerError['location'] = undefined;
           if (cssErr.location) {
             const cssStart = cssErr.location.start;
             const cssEnd = cssErr.location.end;
@@ -1202,4 +1202,11 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
   });
 
   return errors;
+}
+
+export function checkHtmlSyntax(code: string, options?: HTMLCheckerOptions, lang?: Language): HTMLCheckerError[] {
+  const chosenLang: Language = lang ?? 'en';
+  const lexer = new Lexer(code, chosenLang);
+  const tokens = lexer.tokenize();
+  return checkHtml(tokens, options, chosenLang);
 }

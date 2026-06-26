@@ -26,10 +26,10 @@ export const CHECKER_ERROR_TYPES = [
   'CSS_STRUCTURE_VIOLATION'
 ] as const;
 
-export type CheckerErrorType = (typeof CHECKER_ERROR_TYPES)[number];
+export type HTMLCheckerErrorType = (typeof CHECKER_ERROR_TYPES)[number];
 
-export interface CheckerError {
-  type: CheckerErrorType;
+export interface HTMLCheckerError {
+  type: HTMLCheckerErrorType;
   message: string;
   advice?: string;
   location?: {
@@ -95,7 +95,7 @@ export interface CSSCheckerError {
   };
 }
 
-export interface CheckerOptions {
+export interface HTMLCheckerOptions {
   allowedTags?: string[] | null;
   forbiddenTags?: string[] | null;
   allowDeprecatedTags?: boolean;
