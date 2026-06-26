@@ -1085,7 +1085,6 @@ describe("HTML Syntax Checker", () => {
       it("accepts uppercase and lowercase but not mixed-case by default", () => {
         const code = '<div class="a" CLASS="b" tabIndex="0"></div>';
         const errors = checkHtmlSyntax(code);
-        console.log(errors);
         expect(errors.filter((e) => e.type === "CASE")).toHaveLength(1);
         expect(errors[0].message).toContain("tabIndex");
       });
