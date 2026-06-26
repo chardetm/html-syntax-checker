@@ -14,7 +14,8 @@ export const STANDARD_TAGS = new Set([
   'button', 'datalist', 'fieldset', 'form', 'input', 'label', 'legend', 'meter', 'optgroup', 'option',
   'output', 'progress', 'select', 'textarea',
   'details', 'dialog', 'summary',
-  'template', 'slot', 'base', 'svg'
+  'template', 'slot', 'base', 'svg',
+  'search', 'hgroup', 'math'
 ]);
 
 // Void elements (must not have closing tags)
@@ -38,33 +39,56 @@ export const REQUIRED_ATTRIBUTES: Record<string, string[]> = {
   'track': ['src', 'kind'],
 };
 
+// Standard HTML5 global event handler attributes
+export const GLOBAL_EVENT_ATTRIBUTES = [
+  'onabort', 'onafterprint', 'onbeforeprint', 'onbeforeunload', 'onblur', 'oncanplay', 'oncanplaythrough',
+  'onchange', 'onclick', 'oncontextmenu', 'oncopy', 'oncut', 'ondblclick', 'ondrag', 'ondragend',
+  'ondragenter', 'ondragexit', 'ondragleave', 'ondragover', 'ondragstart', 'ondrop', 'ondurationchange',
+  'onemptied', 'onended', 'onerror', 'onfocus', 'onhashchange', 'oninput', 'oninvalid', 'onkeydown', 'onkeypress',
+  'onkeyup', 'onload', 'onloadeddata', 'onloadedmetadata', 'onloadstart', 'onmessage', 'onmousedown',
+  'onmouseenter', 'onmouseleave', 'onmousemove', 'onmouseout', 'onmouseover', 'onmouseup', 'onmousewheel',
+  'onoffline', 'ononline', 'onpagehide', 'onpageshow', 'onpaste', 'onpause', 'onplay', 'onplaying',
+  'onpopstate', 'onprogress', 'onratechange', 'onreset', 'onresize', 'onscroll', 'onseeked', 'onseeking',
+  'onselect', 'onstalled', 'onstorage', 'onsubmit', 'onsuspend', 'ontimeupdate', 'ontoggle', 'onunload',
+  'onvolumechange', 'onwaiting', 'onwheel',
+  'onauxclick', 'ongotpointercapture', 'onlostpointercapture', 'onpointerdown', 'onpointermove', 'onpointerup',
+  'onpointercancel', 'onpointerover', 'onpointerout', 'onpointerenter', 'onpointerleave', 'onselectstart',
+  'onselectionchange', 'onanimationend', 'onanimationiteration', 'onanimationstart', 'ontransitionend',
+  'onfocusin', 'onfocusout', 'onslotchange', 'onsearch', 'oncancel', 'onclose', 'onformdata'
+];
+
 // Global standard attributes (valid on all elements)
 export const GLOBAL_STANDARD_ATTRIBUTES = new Set([
   'class', 'id', 'style', 'title', 'lang', 'dir', 'accesskey', 'tabindex',
-  'contenteditable', 'draggable', 'hidden', 'spellcheck', 'translate', 'role', 'slot'
+  'contenteditable', 'draggable', 'hidden', 'spellcheck', 'translate', 'role', 'slot',
+  'autocapitalize', 'autofocus', 'enterkeyhint', 'inputmode', 'is', 'itemid', 'itemprop',
+  'itemref', 'itemscope', 'itemtype', 'nonce', 'part', 'popover', 'inert', 'exportparts',
+  ...GLOBAL_EVENT_ATTRIBUTES
 ]);
 
 // Standard attributes specific to tags
 export const ELEMENT_STANDARD_ATTRIBUTES: Record<string, string[]> = {
-  'a': ['href', 'target', 'rel', 'download', 'hreflang', 'type'],
-  'img': ['src', 'alt', 'width', 'height', 'srcset', 'sizes', 'loading', 'crossorigin', 'usemap'],
+  'a': ['href', 'target', 'rel', 'download', 'hreflang', 'type', 'ping', 'referrerpolicy'],
+  'area': ['alt', 'coords', 'shape', 'href', 'target', 'download', 'rel', 'referrerpolicy'],
+  'img': ['src', 'alt', 'width', 'height', 'srcset', 'sizes', 'loading', 'crossorigin', 'usemap', 'decoding', 'fetchpriority', 'ismap', 'referrerpolicy'],
   'input': [
     'type', 'name', 'value', 'placeholder', 'disabled', 'readonly', 'checked', 'required',
     'pattern', 'min', 'max', 'step', 'maxlength', 'minlength', 'multiple', 'accept',
-    'autocomplete', 'autofocus', 'form', 'list'
+    'autocomplete', 'autofocus', 'form', 'list', 'alt', 'capture', 'dirname', 'formaction',
+    'formenctype', 'formmethod', 'formnovalidate', 'formtarget', 'height', 'size', 'src', 'width'
   ],
-  'button': ['type', 'name', 'value', 'disabled', 'form', 'formaction', 'formenctype', 'formmethod', 'formnovalidate', 'formtarget'],
-  'form': ['action', 'method', 'enctype', 'name', 'target', 'autocomplete', 'novalidate'],
-  'select': ['name', 'disabled', 'multiple', 'required', 'size', 'form'],
+  'button': ['type', 'name', 'value', 'disabled', 'form', 'formaction', 'formenctype', 'formmethod', 'formnovalidate', 'formtarget', 'popovertarget', 'popovertargetaction'],
+  'form': ['action', 'method', 'enctype', 'name', 'target', 'autocomplete', 'novalidate', 'accept-charset', 'rel'],
+  'select': ['name', 'disabled', 'multiple', 'required', 'size', 'form', 'autocomplete', 'autofocus'],
   'option': ['value', 'selected', 'disabled', 'label'],
-  'textarea': ['name', 'rows', 'cols', 'placeholder', 'disabled', 'readonly', 'required', 'maxlength', 'minlength', 'form'],
-  'link': ['href', 'rel', 'type', 'media', 'sizes', 'crossorigin', 'integrity', 'as'],
-  'meta': ['name', 'content', 'charset', 'http-equiv'],
-  'script': ['src', 'type', 'async', 'defer', 'crossorigin', 'integrity', 'nomodule'],
-  'iframe': ['src', 'srcdoc', 'name', 'width', 'height', 'sandbox', 'allow', 'allowfullscreen', 'loading', 'referrerpolicy', 'frameborder'], // frameborder is deprecated but YouTube uses it when embedding a video
-  'video': ['src', 'poster', 'preload', 'autoplay', 'loop', 'muted', 'controls', 'width', 'height', 'playsinline', 'crossorigin'],
-  'audio': ['src', 'preload', 'autoplay', 'loop', 'muted', 'controls', 'crossorigin'],
-  'source': ['src', 'type', 'srcset', 'sizes', 'media'],
+  'textarea': ['name', 'rows', 'cols', 'placeholder', 'disabled', 'readonly', 'required', 'maxlength', 'minlength', 'form', 'autocomplete', 'autofocus', 'dirname', 'wrap'],
+  'link': ['href', 'rel', 'type', 'media', 'sizes', 'crossorigin', 'integrity', 'as', 'imagesrcset', 'imagesizes', 'referrerpolicy', 'disabled', 'fetchpriority'],
+  'meta': ['name', 'content', 'charset', 'http-equiv', 'media'],
+  'script': ['src', 'type', 'async', 'defer', 'crossorigin', 'integrity', 'nomodule', 'referrerpolicy', 'fetchpriority', 'blocking'],
+  'iframe': ['src', 'srcdoc', 'name', 'width', 'height', 'sandbox', 'allow', 'allowfullscreen', 'loading', 'referrerpolicy', 'frameborder', 'allowpaymentrequest', 'csp', 'fetchpriority', 'allowusermedia'], // frameborder is deprecated but YouTube uses it when embedding a video
+  'video': ['src', 'poster', 'preload', 'autoplay', 'loop', 'muted', 'controls', 'width', 'height', 'playsinline', 'crossorigin', 'controlslist', 'disablepictureinpicture', 'disableremoteplayback'],
+  'audio': ['src', 'preload', 'autoplay', 'loop', 'muted', 'controls', 'crossorigin', 'controlslist', 'disableremoteplayback'],
+  'source': ['src', 'type', 'srcset', 'sizes', 'media', 'height', 'width'],
   'track': ['src', 'kind', 'srclang', 'label', 'default'],
   'ol': ['reversed', 'start', 'type'],
   'li': ['value'],
@@ -76,7 +100,19 @@ export const ELEMENT_STANDARD_ATTRIBUTES: Record<string, string[]> = {
   'map': ['name'],
   'col': ['span'],
   'colgroup': ['span'],
-  'label': ['for']
+  'label': ['for'],
+  'base': ['href', 'target'],
+  'canvas': ['width', 'height'],
+  'data': ['value'],
+  'del': ['cite', 'datetime'],
+  'embed': ['src', 'type', 'width', 'height'],
+  'ins': ['cite', 'datetime'],
+  'meter': ['value', 'min', 'max', 'low', 'high', 'optimum', 'form'],
+  'object': ['data', 'type', 'name', 'form', 'width', 'height'],
+  'output': ['for', 'form', 'name'],
+  'progress': ['max', 'value'],
+  'q': ['cite'],
+  'time': ['datetime']
 };
 
 // Deprecated/Obsolete attributes
@@ -87,3 +123,4 @@ export const DEPRECATED_ATTRIBUTES = new Set([
   'rules', 'scrolling', 'size', 'valign', 'vlink', 'alink', 'link', 'text'
   // 'frameborder' not included because YouTube uses it when embedding a video
 ]);
+

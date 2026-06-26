@@ -392,8 +392,8 @@ export const getMessage = {
       ? `L'attribut personnalisé «\u00A0${attrName}\u00A0» n'est pas autorisé sur la balise <${name}>.`
       : `The custom attribute "${attrName}" is not allowed on the tag <${name}>.`,
     advice: lang === 'fr'
-      ? `Seuls les attributs standard ou commençant par «\u00A0data-\u00A0» sont acceptés. Modifiez le nom en «\u00A0data-${attrNameLower}\u00A0».`
-      : `Only standard attributes or those starting with "data-" are accepted. Rename it to "data-${attrNameLower}".`
+      ? `Seuls les attributs standard ou commençant par «\u00A0data-\u00A0» ou «\u00A0aria-\u00A0» sont acceptés. Si c'est un attribut personnalisé, modifiez le nom en «\u00A0data-${attrNameLower}\u00A0».`
+      : `Only standard attributes or those starting with "data-" or "aria-" are accepted. If it is a custom attribute, rename it to "data-${attrNameLower}".`
   }),
 
   attributeRequired: (lang: Language, req: string, name: string) => ({

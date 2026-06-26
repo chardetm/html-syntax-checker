@@ -1560,5 +1560,50 @@ describe("HTML Syntax Checker", () => {
       });
     });
   });
+
+  describe("HTML5 Event Handlers and ARIA Support", () => {
+    it("allows standard global event handler attributes", () => {
+      const code = '<button onclick="alert(1)" onkeydown="run()" onfocus="focus()">Test</button>';
+      const errors = checkHtmlSyntax(code, {
+        allowCustomAttributes: false,
+      });
+      expect(errors).toHaveLength(0);
+    });
+
+    it("allows ARIA-related attributes starting with aria-", () => {
+      const code = '<div aria-label="Alert" aria-hidden="true" aria-labelledby="id1">Test</div>';
+      const errors = checkHtmlSyntax(code, {
+        allowCustomAttributes: false,
+      });
+      expect(errors).toHaveLength(0);
+    });
+
+    it("rejects custom attributes that are not standard/data/aria attributes when allowCustomAttributes is false", () => {
+      const code = '<div custom-attr="value">Test</div>';
+      const errors = checkHtmlSyntax(code, {
+        allowCustomAttributes: false,
+      });
+      expect(errors).toHaveLength(1);
+      expect(errors[0].type).toBe("ALLOWED_ATTRIBUTES");
+      expect(errors[0].message).toContain("custom-attr");
+      expect(errors[0].advice).toContain("aria-");
+    });
+
+    it("allows new HTML5 tags like search, hgroup, and math", () => {
+      const code = '<search><hgroup><h1>Title</h1></hgroup><math></math></search>';
+      const errors = checkHtmlSyntax(code, {
+        allowCustomTags: false,
+      });
+      expect(errors).toHaveLength(0);
+    });
+
+    it("allows new HTML5 tag specific attributes", () => {
+      const code = '<a href="/x" referrerpolicy="no-referrer" ping="/ping">Link</a><iframe src="/frame" allowusermedia="true"></iframe>';
+      const errors = checkHtmlSyntax(code, {
+        allowCustomAttributes: false,
+      });
+      expect(errors).toHaveLength(0);
+    });
+  });
 });
 

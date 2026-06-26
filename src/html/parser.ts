@@ -739,8 +739,9 @@ export function checkHtml(tokens: Token[], userOptions: HTMLCheckerOptions = {},
               const isGlobalStd = GLOBAL_STANDARD_ATTRIBUTES.has(attrNameLower);
               const isTagSpecificStd = ELEMENT_STANDARD_ATTRIBUTES[tagLower]?.includes(attrNameLower) ?? false;
               const isDataAttr = attrNameLower.startsWith('data-');
+              const isAriaAttr = attrNameLower.startsWith('aria-');
 
-              if (!isGlobalStd && !isTagSpecificStd && !isDataAttr && !isDeprecatedAttr && options.allowCustomAttributes === false) {
+              if (!isGlobalStd && !isTagSpecificStd && !isDataAttr && !isAriaAttr && !isDeprecatedAttr && options.allowCustomAttributes === false) {
                 const { message, advice } = getMessage.attributeCustomNotAllowed(lang, attrName, name, attrNameLower);
                 errors.push({
                   type: 'ALLOWED_ATTRIBUTES',
