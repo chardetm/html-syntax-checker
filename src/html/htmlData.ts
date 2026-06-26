@@ -61,7 +61,7 @@ export const ELEMENT_STANDARD_ATTRIBUTES: Record<string, string[]> = {
   'link': ['href', 'rel', 'type', 'media', 'sizes', 'crossorigin', 'integrity', 'as'],
   'meta': ['name', 'content', 'charset', 'http-equiv'],
   'script': ['src', 'type', 'async', 'defer', 'crossorigin', 'integrity', 'nomodule'],
-  'iframe': ['src', 'srcdoc', 'name', 'width', 'height', 'sandbox', 'allow', 'allowfullscreen', 'loading', 'referrerpolicy'],
+  'iframe': ['src', 'srcdoc', 'name', 'width', 'height', 'sandbox', 'allow', 'allowfullscreen', 'loading', 'referrerpolicy', 'frameborder'], // frameborder is deprecated but YouTube uses it when embedding a video
   'video': ['src', 'poster', 'preload', 'autoplay', 'loop', 'muted', 'controls', 'width', 'height', 'playsinline', 'crossorigin'],
   'audio': ['src', 'preload', 'autoplay', 'loop', 'muted', 'controls', 'crossorigin'],
   'source': ['src', 'type', 'srcset', 'sizes', 'media'],
