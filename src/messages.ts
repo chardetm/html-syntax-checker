@@ -66,7 +66,7 @@ export const getMessage = {
       ? 'Le commentaire HTML n’est pas fermé.'
       : 'HTML comment is not closed.',
     advice: lang === 'fr'
-      ? 'Ajoutez "-->" pour fermer le commentaire.'
+      ? 'Ajoutez «\u00A0-->\u00A0» pour fermer le commentaire.'
       : 'Add "-->" to close the comment.'
   }),
 
@@ -75,40 +75,40 @@ export const getMessage = {
       ? 'La déclaration DOCTYPE n’est pas fermée.'
       : 'DOCTYPE declaration is not closed.',
     advice: lang === 'fr'
-      ? 'Ajoutez ">" pour fermer la déclaration.'
+      ? 'Ajoutez «\u00A0>\u00A0» pour fermer la déclaration.'
       : 'Add ">" to close the declaration.'
   }),
 
   malformedClosingTag: (lang: Language, name: string) => ({
     message: lang === 'fr'
-      ? `La balise de fermeture "</${name || '...'}" est mal formée.`
+      ? `La balise de fermeture «\u00A0</${name || '...'}\u00A0» est mal formée.`
       : `Closing tag "</${name || '...'}" is malformed.`,
     advice: lang === 'fr'
-      ? `Une balise de fermeture ne doit contenir que le nom de la balise, sans attributs, et se terminer par ">" (exemple : "</${name || 'nom_de_balise'}>").`
+      ? `Une balise de fermeture ne doit contenir que le nom de la balise, sans attributs, et se terminer par «\u00A0>\u00A0» (exemple\u00A0: «\u00A0</${name || 'nom_de_balise'}>\u00A0»).`
       : `A closing tag must only contain the tag name, without attributes, and end with ">" (example: "</${name || 'tag_name'}>").`
   }),
 
   spaceAfterLessThan: (lang: Language, tagName: string) => ({
     message: lang === 'fr'
-      ? `Espace inattendu après "<" dans la balise "< ${tagName}".`
+      ? `Espace inattendu après «\u00A0<\u00A0» dans la balise «\u00A0< ${tagName}\u00A0».`
       : `Unexpected space after "<" in tag "< ${tagName}".`,
     advice: lang === 'fr'
-      ? `Retirez l'espace entre "<" et "${tagName}" pour écrire "<${tagName}".`
+      ? `Retirez l'espace entre «\u00A0<\u00A0» et «\u00A0${tagName}\u00A0» pour écrire «\u00A0<${tagName}\u00A0».`
       : `Remove the space between "<" and "${tagName}" to write "<${tagName}".`
   }),
 
   unexpectedCharInTag: (lang: Language, errChar: string, name: string) => ({
     message: lang === 'fr'
-      ? `Caractère inattendu "${errChar}" dans la balise "<${name}".`
+      ? `Caractère inattendu «\u00A0${errChar}\u00A0» dans la balise «\u00A0<${name}\u00A0».`
       : `Unexpected character "${errChar}" in tag "<${name}".`,
     advice: lang === 'fr'
-      ? 'Vérifiez la syntaxe de vos attributs. Un attribut doit avoir un nom suivi de "=" et d\'une valeur.'
+      ? 'Vérifiez la syntaxe de vos attributs. Un attribut doit avoir un nom suivi de «\u00A0=\u00A0» et d\'une valeur.'
       : 'Check your attribute syntax. An attribute must have a name followed by "=" and a value.'
   }),
 
   unclosedAttributeQuote: (lang: Language, attrName: string, quoteType: string) => ({
     message: lang === 'fr'
-      ? `La valeur de l'attribut "${attrName}" n'est pas fermée par un guillemet.`
+      ? `La valeur de l'attribut «\u00A0${attrName}\u00A0» n'est pas fermée par un guillemet.`
       : `The value of attribute "${attrName}" is not closed by a quote.`,
     advice: lang === 'fr'
       ? `Ajoutez un guillemet fermant (${quoteType}) pour fermer la valeur de l'attribut.`
@@ -117,25 +117,25 @@ export const getMessage = {
 
   unclosedOpeningTag: (lang: Language, name: string) => ({
     message: lang === 'fr'
-      ? `La balise ouvrante "<${name}" n’est pas fermée.`
+      ? `La balise ouvrante «\u00A0<${name}\u00A0» n’est pas fermée.`
       : `Opening tag "<${name}" is not closed.`,
     advice: lang === 'fr'
-      ? 'Ajoutez ">" ou "/>" pour fermer la balise.'
+      ? 'Ajoutez «\u00A0>\u00A0» ou «\u00A0/>\u00A0» pour fermer la balise.'
       : 'Add ">" or "/>" to close the tag.'
   }),
 
   unexpectedLessThan: (lang: Language) => ({
     message: lang === 'fr'
-      ? 'Caractère "<" inattendu.'
+      ? 'Caractère «\u00A0<\u00A0» inattendu.'
       : 'Unexpected "<" character.',
     advice: lang === 'fr'
-      ? 'Si vous vouliez ouvrir une balise, vérifiez son nom. Si vous vouliez écrire le symbole "inférieur à", utilisez "&lt;".'
+      ? 'Si vous vouliez ouvrir une balise, vérifiez son nom. Si vous vouliez écrire le symbole «\u00A0inférieur à\u00A0», utilisez «\u00A0&lt;\u00A0».'
       : 'If you wanted to open a tag, check its name. If you wanted to write the "less than" symbol, use "&lt;".'
   }),
 
   incompatibleOptions: (lang: Language) =>
     lang === 'fr'
-      ? "Les options 'allowedTags' et 'forbiddenTags' ne peuvent pas être utilisées simultanément."
+      ? 'Les options «\u00A0allowedTags\u00A0» et «\u00A0forbiddenTags\u00A0» ne peuvent pas être utilisées simultanément.'
       : "The options 'allowedTags' and 'forbiddenTags' cannot be used simultaneously.",
 
   missingDoctype: (lang: Language) => ({
@@ -143,16 +143,16 @@ export const getMessage = {
       ? 'La déclaration DOCTYPE est manquante ou mal placée.'
       : 'DOCTYPE declaration is missing or misplaced.',
     advice: lang === 'fr'
-      ? 'Ajoutez "<!DOCTYPE html>" tout au début de votre fichier HTML.'
+      ? 'Ajoutez «\u00A0<!DOCTYPE html>\u00A0» tout au début de votre fichier HTML.'
       : 'Add "<!DOCTYPE html>" at the very beginning of your HTML file.'
   }),
 
   invalidDoctype: (lang: Language, raw: string) => ({
     message: lang === 'fr'
-      ? `La déclaration DOCTYPE "${raw}" est incorrecte ou n'est pas au format standard.`
+      ? `La déclaration DOCTYPE «\u00A0${raw}\u00A0» est incorrecte ou n'est pas au format standard.`
       : `DOCTYPE declaration "${raw}" is incorrect or not in standard format.`,
     advice: lang === 'fr'
-      ? 'Utilisez la déclaration standard : "<!DOCTYPE html>".'
+      ? 'Utilisez la déclaration standard\u00A0: «\u00A0<!DOCTYPE html>\u00A0».'
       : 'Use the standard declaration: "<!DOCTYPE html>".'
   }),
 
@@ -188,7 +188,7 @@ export const getMessage = {
       ? 'La balise <body> est imbriquée dans la balise <head>.'
       : 'The <body> tag is nested inside the <head> tag.',
     advice: lang === 'fr'
-      ? 'Fermez d’abord la section head avec "</head>" avant d’ouvrir la section "<body>".'
+      ? 'Fermez d’abord la section head avec «\u00A0</head>\u00A0» avant d’ouvrir la section «\u00A0<body>\u00A0».'
       : 'First close the head section with "</head>" before opening the "<body>" section.'
   }),
 
@@ -269,7 +269,7 @@ export const getMessage = {
       ? `La balise <${name}> doit respecter la casse définie (les minuscules sont interdites).`
       : `The tag <${name}> must respect the defined casing (lowercase is forbidden).`,
     advice: lang === 'fr'
-      ? `Modifiez la casse pour écrire la balise en majuscules (ex : <${name.toUpperCase()}>).`
+      ? `Modifiez la casse pour écrire la balise en majuscules (ex\u00A0: <${name.toUpperCase()}>).`
       : `Modify the casing to write the tag in uppercase (e.g. <${name.toUpperCase()}>).`
   }),
 
@@ -278,7 +278,7 @@ export const getMessage = {
       ? `La balise <${name}> doit respecter la casse définie (les majuscules sont interdites).`
       : `The tag <${name}> must respect the defined casing (uppercase is forbidden).`,
     advice: lang === 'fr'
-      ? `Modifiez la casse pour écrire la balise en minuscules (ex : <${name.toLowerCase()}>).`
+      ? `Modifiez la casse pour écrire la balise en minuscules (ex\u00A0: <${name.toLowerCase()}>).`
       : `Modify the casing to write the tag in lowercase (e.g. <${name.toLowerCase()}>).`
   }),
 
@@ -287,25 +287,25 @@ export const getMessage = {
       ? `La balise <${name}> a une casse mixte (mélange de majuscules et de minuscules) non autorisée.`
       : `The tag <${name}> has an unauthorized mixed casing (mix of uppercase and lowercase).`,
     advice: lang === 'fr'
-      ? `Utilisez uniquement des minuscules (ex : <${name.toLowerCase()}>) ou uniquement des majuscules.`
+      ? `Utilisez uniquement des minuscules (ex\u00A0: <${name.toLowerCase()}>) ou uniquement des majuscules.`
       : `Use only lowercase (e.g. <${name.toLowerCase()}>) or only uppercase.`
   }),
 
   voidElementMustSelfClose: (lang: Language, name: string) => ({
     message: lang === 'fr'
-      ? `La balise orpheline <${name}> doit se terminer par "/>" (style XHTML).`
+      ? `La balise orpheline <${name}> doit se terminer par «\u00A0/>\u00A0» (style XHTML).`
       : `The void element <${name}> must end with "/>" (XHTML style).`,
     advice: lang === 'fr'
-      ? `Ajoutez une barre oblique "/" avant le symbole ">" (ex : <${name} />).`
+      ? `Ajoutez une barre oblique «\u00A0/\u00A0» avant le symbole «\u00A0>\u00A0» (ex\u00A0: <${name} />).`
       : `Add a slash "/" before the ">" symbol (e.g. <${name} />).`
   }),
 
   voidElementMustNotSelfClose: (lang: Language, name: string) => ({
     message: lang === 'fr'
-      ? `La balise orpheline <${name}> ne doit pas se terminer par "/>" (style HTML5).`
+      ? `La balise orpheline <${name}> ne doit pas se terminer par «\u00A0/>\u00A0» (style HTML5).`
       : `The void element <${name}> must not end with "/>" (HTML5 style).`,
     advice: lang === 'fr'
-      ? `Retirez la barre oblique "/" avant le symbole ">" (ex : <${name}>).`
+      ? `Retirez la barre oblique «\u00A0/\u00A0» avant le symbole «\u00A0>\u00A0» (ex\u00A0: <${name}>).`
       : `Remove the slash "/" before the ">" symbol (e.g. <${name}>).`
   }),
 
@@ -314,49 +314,49 @@ export const getMessage = {
       ? `La balise <${name}> n’est pas une balise orpheline et ne peut pas être auto-fermante.`
       : `The tag <${name}> is not a void element and cannot be self-closing.`,
     advice: lang === 'fr'
-      ? `Utilisez une balise de fermeture explicite (ex : <${name}></${name}>) au lieu de la syntaxe auto-fermante.`
+      ? `Utilisez une balise de fermeture explicite (ex\u00A0: <${name}></${name}>) au lieu de la syntaxe auto-fermante.`
       : `Use an explicit closing tag (e.g. <${name}></${name}>) instead of self-closing syntax.`
   }),
 
   attributeLowercaseForbidden: (lang: Language, attrName: string, name: string) => ({
     message: lang === 'fr'
-      ? `L'attribut "${attrName}" dans la balise <${name}> ne doit pas être en minuscules.`
+      ? `L'attribut «\u00A0${attrName}\u00A0» dans la balise <${name}> ne doit pas être en minuscules.`
       : `The attribute "${attrName}" in tag <${name}> must not be in lowercase.`,
     advice: lang === 'fr'
-      ? `Modifiez la casse pour respecter les règles de casse des attributs (ex : ${attrName.toUpperCase()}).`
+      ? `Modifiez la casse pour respecter les règles de casse des attributs (ex\u00A0: ${attrName.toUpperCase()}).`
       : `Modify the casing to respect attribute casing rules (e.g. ${attrName.toUpperCase()}).`
   }),
 
   attributeUppercaseForbidden: (lang: Language, attrName: string, name: string) => ({
     message: lang === 'fr'
-      ? `L'attribut "${attrName}" dans la balise <${name}> ne doit pas être en majuscules.`
+      ? `L'attribut «\u00A0${attrName}\u00A0» dans la balise <${name}> ne doit pas être en majuscules.`
       : `The attribute "${attrName}" in tag <${name}> must not be in uppercase.`,
     advice: lang === 'fr'
-      ? `Modifiez la casse pour respecter les règles de casse des attributs (ex : ${attrName.toLowerCase()}).`
+      ? `Modifiez la casse pour respecter les règles de casse des attributs (ex\u00A0: ${attrName.toLowerCase()}).`
       : `Modify the casing to respect attribute casing rules (e.g. ${attrName.toLowerCase()}).`
   }),
 
   attributeMixedForbidden: (lang: Language, attrName: string, name: string) => ({
     message: lang === 'fr'
-      ? `L'attribut "${attrName}" dans la balise <${name}> a une casse mixte non autorisée.`
+      ? `L'attribut «\u00A0${attrName}\u00A0» dans la balise <${name}> a une casse mixte non autorisée.`
       : `The attribute "${attrName}" in tag <${name}> has an unauthorized mixed casing.`,
     advice: lang === 'fr'
-      ? `Utilisez uniquement des minuscules (ex : "${attrName.toLowerCase()}") ou uniquement des majuscules selon vos règles.`
+      ? `Utilisez uniquement des minuscules (ex\u00A0: «\u00A0${attrName.toLowerCase()}\u00A0») ou uniquement des majuscules selon vos règles.`
       : `Use only lowercase (e.g. "${attrName.toLowerCase()}") or only uppercase according to your rules.`
   }),
 
   attributeForbidden: (lang: Language, attrName: string, name: string) => ({
     message: lang === 'fr'
-      ? `L'attribut "${attrName}" est interdit sur la balise <${name}>.`
+      ? `L'attribut «\u00A0${attrName}\u00A0» est interdit sur la balise <${name}>.`
       : `The attribute "${attrName}" is forbidden on the tag <${name}>.`,
     advice: lang === 'fr'
-      ? `Retirez l'attribut "${attrName}" de cette balise.`
+      ? `Retirez l'attribut «\u00A0${attrName}\u00A0» de cette balise.`
       : `Remove the attribute "${attrName}" from this tag.`
   }),
 
   attributeDeprecated: (lang: Language, attrName: string) => ({
     message: lang === 'fr'
-      ? `L'attribut "${attrName}" est déprécié/obsolète en HTML5.`
+      ? `L'attribut «\u00A0${attrName}\u00A0» est déprécié/obsolète en HTML5.`
       : `The attribute "${attrName}" is deprecated/obsolete in HTML5.`,
     advice: lang === 'fr'
       ? `Évitez d'utiliser des attributs de style ou de mise en forme obsolètes. Utilisez du CSS pour cela.`
@@ -365,28 +365,28 @@ export const getMessage = {
 
   attributeCustomNotAllowed: (lang: Language, attrName: string, name: string, attrNameLower: string) => ({
     message: lang === 'fr'
-      ? `L'attribut personnalisé "${attrName}" n'est pas autorisé sur la balise <${name}>.`
+      ? `L'attribut personnalisé «\u00A0${attrName}\u00A0» n'est pas autorisé sur la balise <${name}>.`
       : `The custom attribute "${attrName}" is not allowed on the tag <${name}>.`,
     advice: lang === 'fr'
-      ? `Seuls les attributs standard ou commençant par "data-" sont acceptés. Modifiez le nom en "data-${attrNameLower}".`
+      ? `Seuls les attributs standard ou commençant par «\u00A0data-\u00A0» sont acceptés. Modifiez le nom en «\u00A0data-${attrNameLower}\u00A0».`
       : `Only standard attributes or those starting with "data-" are accepted. Rename it to "data-${attrNameLower}".`
   }),
 
   attributeRequired: (lang: Language, req: string, name: string) => ({
     message: lang === 'fr'
-      ? `L'attribut obligatoire "${req}" est manquant pour la balise <${name}>.`
+      ? `L'attribut obligatoire «\u00A0${req}\u00A0» est manquant pour la balise <${name}>.`
       : `The required attribute "${req}" is missing for the tag <${name}>.`,
     advice: lang === 'fr'
-      ? `Ajoutez l'attribut "${req}" (ex : <${name} ${req}="...">).`
+      ? `Ajoutez l'attribut «\u00A0${req}\u00A0» (ex\u00A0: <${name} ${req}="...">).`
       : `Add the attribute "${req}" (e.g. <${name} ${req}="...">).`
   }),
 
   attributeImgAltRequired: (lang: Language) => ({
     message: lang === 'fr'
-      ? `L'attribut obligatoire "alt" (description textuelle) est manquant pour la balise <img>.`
+      ? `L'attribut obligatoire «\u00A0alt\u00A0» (description textuelle) est manquant pour la balise <img>.`
       : `The required attribute "alt" (textual description) is missing for the tag <img>.`,
     advice: lang === 'fr'
-      ? `L'attribut "alt" est indispensable pour l'accessibilité des personnes malvoyantes. Ajoutez alt="..." décrivant l'image.`
+      ? `L'attribut «\u00A0alt\u00A0» est indispensable pour l'accessibilité des personnes malvoyantes. Ajoutez alt="..." décrivant l'image.`
       : `The "alt" attribute is essential for accessibility for visually impaired users. Add alt="..." describing the image.`
   }),
 
@@ -404,7 +404,7 @@ export const getMessage = {
       ? `La balise </${name}> doit respecter la casse définie (les minuscules sont interdites).`
       : `The tag </${name}> must respect the defined casing (lowercase is forbidden).`,
     advice: lang === 'fr'
-      ? `Modifiez la casse pour écrire la balise en majuscules (ex : </${name.toUpperCase()}>).`
+      ? `Modifiez la casse pour écrire la balise en majuscules (ex\u00A0: </${name.toUpperCase()}>).`
       : `Modify the casing to write the tag in uppercase (e.g. </${name.toUpperCase()}>).`
   }),
 
@@ -413,7 +413,7 @@ export const getMessage = {
       ? `La balise </${name}> doit respecter la casse définie (les majuscules sont interdites).`
       : `The tag </${name}> must respect the defined casing (uppercase is forbidden).`,
     advice: lang === 'fr'
-      ? `Modifiez la casse pour écrire la balise en minuscules (ex : </${name.toLowerCase()}>).`
+      ? `Modifiez la casse pour écrire la balise en minuscules (ex\u00A0: </${name.toLowerCase()}>).`
       : `Modify the casing to write the tag in lowercase (e.g. </${name.toLowerCase()}>).`
   }),
 
@@ -422,7 +422,7 @@ export const getMessage = {
       ? `La balise </${name}> a une casse mixte non autorisée.`
       : `The tag </${name}> has an unauthorized mixed casing.`,
     advice: lang === 'fr'
-      ? `Utilisez uniquement des minuscules (ex : </${name.toLowerCase()}>) ou uniquement des majuscules.`
+      ? `Utilisez uniquement des minuscules (ex\u00A0: </${name.toLowerCase()}>) ou uniquement des majuscules.`
       : `Use only lowercase (e.g. </${name.toLowerCase()}>) or only uppercase.`
   }),
 
@@ -566,16 +566,16 @@ export const getMessage = {
       ? 'La balise <title> est manquante ou vide dans la section <head>.'
       : 'The <title> tag is missing or empty in the <head> section.',
     advice: lang === 'fr'
-      ? 'Ajoutez une balise <title> avec le titre de votre page (ex : <title>Ma page web</title>) dans la section <head>.'
+      ? 'Ajoutez une balise <title> avec le titre de votre page (ex\u00A0: <title>Ma page web</title>) dans la section <head>.'
       : 'Add a <title> tag with your page title (e.g., <title>My Web Page</title>) inside the <head> section.'
   }),
 
   duplicateId: (lang: Language, id: string, line: number) => ({
     message: lang === 'fr'
-      ? `L'identifiant "${id}" est déjà utilisé.`
+      ? `L'identifiant «\u00A0${id}\u00A0» est déjà utilisé.`
       : `Duplicate ID "${id}" found.`,
     advice: lang === 'fr'
-      ? `L'identifiant "${id}" a déjà été défini à la ligne ${line}. Les identifiants doivent être uniques dans tout le document.`
+      ? `L'identifiant «\u00A0${id}\u00A0» a déjà été défini à la ligne ${line}. Les identifiants doivent être uniques dans tout le document.`
       : `The ID "${id}" was already defined at line ${line}. IDs must be unique across the entire document.`
   }),
 
@@ -590,19 +590,19 @@ export const getMessage = {
 
   duplicateName: (lang: Language, name: string, line: number) => ({
     message: lang === 'fr'
-      ? `Nom d'élément de formulaire en double "${name}".`
+      ? `Nom d'élément de formulaire en double «\u00A0${name}\u00A0».`
       : `Duplicate form element name "${name}".`,
     advice: lang === 'fr'
-      ? `Le nom "${name}" est déjà utilisé par un autre élément de formulaire à la ligne ${line}. Les noms des éléments de formulaire doivent être uniques (sauf pour les boutons radio et les cases à cocher).`
+      ? `Le nom «\u00A0${name}\u00A0» est déjà utilisé par un autre élément de formulaire à la ligne ${line}. Les noms des éléments de formulaire doivent être uniques (sauf pour les boutons radio et les cases à cocher).`
       : `The name "${name}" is already used by another form element at line ${line}. Form element names must be unique (except for radio buttons and checkboxes).`
   }),
 
   textareaValueAttribute: (lang: Language) => ({
     message: lang === 'fr'
-      ? `L'élément <textarea> ne doit pas avoir d'attribut "value".`
+      ? `L'élément <textarea> ne doit pas avoir d'attribut «\u00A0value\u00A0».`
       : `The <textarea> element must not have a "value" attribute.`,
     advice: lang === 'fr'
-      ? `Pour définir une valeur par défaut pour un <textarea>, placez le texte entre les balises ouvrante et fermante (ex : <textarea>Texte par défaut</textarea>).`
+      ? `Pour définir une valeur par défaut pour un <textarea>, placez le texte entre les balises ouvrante et fermante (ex\u00A0: <textarea>Texte par défaut</textarea>).`
       : `To set a default value for a <textarea>, place the text inside the opening and closing tags (e.g., <textarea>Default text</textarea>).`
   }),
 
@@ -620,31 +620,31 @@ export const getMessage = {
       ? `Le contrôle de formulaire interactif <${name}> doit être associé à un <label>.`
       : `Interactive form control <${name}> must be associated with a <label>.`,
     advice: lang === 'fr'
-      ? `Imbriquez le contrôle dans un élément <label> ou ajoutez un attribut "for" à un <label> correspondant à l'attribut "id" du contrôle.`
+      ? `Imbriquez le contrôle dans un élément <label> ou ajoutez un attribut «\u00A0for\u00A0» à un <label> correspondant à l'attribut «\u00A0id\u00A0» du contrôle.`
       : `Nest the control inside a <label> element or add a "for" attribute to a <label> matching the control's "id" attribute.`
   }),
 
   radioButtonMissingName: (lang: Language) => ({
     message: lang === 'fr'
-      ? `Le bouton radio n'a pas d'attribut "name".`
+      ? `Le bouton radio n'a pas d'attribut «\u00A0name\u00A0».`
       : `Radio button is missing a "name" attribute.`,
     advice: lang === 'fr'
-      ? `Ajoutez un attribut "name" pour regrouper ce bouton radio avec d'autres.`
+      ? `Ajoutez un attribut «\u00A0name\u00A0» pour regrouper ce bouton radio avec d'autres.`
       : `Add a "name" attribute to group this radio button with others.`
   }),
 
   radioButtonSingleInGroup: (lang: Language, name: string) => ({
     message: lang === 'fr'
-      ? `Le groupe de boutons radio "${name}" doit contenir au moins deux boutons radio.`
+      ? `Le groupe de boutons radio «\u00A0${name}\u00A0» doit contenir au moins deux boutons radio.`
       : `Radio button group "${name}" must contain at least two radio buttons.`,
     advice: lang === 'fr'
-      ? `Ajoutez un autre bouton radio avec le nom "${name}", ou utilisez une case à cocher si une seule option est nécessaire.`
+      ? `Ajoutez un autre bouton radio avec le nom «\u00A0${name}\u00A0», ou utilisez une case à cocher si une seule option est nécessaire.`
       : `Add another radio button with the name "${name}", or use a checkbox if only one option is needed.`
   }),
 
   buttonMissingType: (lang: Language) => ({
     message: lang === 'fr'
-      ? `Les boutons à l'intérieur d'un formulaire doivent avoir un attribut "type" explicite.`
+      ? `Les boutons à l'intérieur d'un formulaire doivent avoir un attribut «\u00A0type\u00A0» explicite.`
       : `Buttons inside a form must have an explicit "type" attribute.`,
     advice: lang === 'fr'
       ? `Ajoutez type="submit", type="button" ou type="reset" à l'élément <button>.`

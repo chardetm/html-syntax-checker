@@ -475,14 +475,14 @@ describe("HTML Syntax Checker", () => {
     it("outputs French for space after <", () => {
       const code = "< div>";
       const errors = checkHtmlSyntax(code, {}, "fr");
-      expect(errors[0].message).toContain('Espace inattendu après "<"');
+      expect(errors[0].message).toContain('Espace inattendu après «\u00A0<\u00A0»');
     });
 
     it("outputs French for unclosed tag", () => {
       const code = '<div class="test"';
       const errors = checkHtmlSyntax(code, {}, "fr");
       expect(errors[0].message).toContain(
-        'balise ouvrante "<div" n\u2019est pas ferm\u00e9e',
+        'balise ouvrante «\u00A0<div\u00A0» n\u2019est pas ferm\u00e9e',
       );
     });
 
@@ -495,7 +495,7 @@ describe("HTML Syntax Checker", () => {
     it("outputs French for raw < character", () => {
       const code = "10 < 20";
       const errors = checkHtmlSyntax(code, {}, "fr");
-      expect(errors[0].message).toContain('Caractère "<" inattendu');
+      expect(errors[0].message).toContain('Caractère «\u00A0<\u00A0» inattendu');
     });
 
     it("outputs French for forbidden tag", () => {
@@ -1178,8 +1178,8 @@ describe("HTML Syntax Checker", () => {
       const errors = checkHtmlSyntax(code, {}, "fr");
       const idErrors = errors.filter((e) => e.type === "DUPLICATE_ID");
       expect(idErrors).toHaveLength(1);
-      expect(idErrors[0].message).toContain('L\'identifiant "test" est déjà utilisé.');
-      expect(idErrors[0].advice).toContain('L\'identifiant "test" a déjà été défini à la ligne 1.');
+      expect(idErrors[0].message).toContain('L\'identifiant «\u00A0test\u00A0» est déjà utilisé.');
+      expect(idErrors[0].advice).toContain('L\'identifiant «\u00A0test\u00A0» a déjà été défini à la ligne 1.');
     });
 
     it("detects duplicate IDs across standard elements and SVG elements", () => {
@@ -1251,7 +1251,7 @@ describe("HTML Syntax Checker", () => {
         const errors = checkHtmlSyntax(code, {}, "fr");
         const formErrors = errors.filter((e) => e.type === "FORM_RULE");
         expect(formErrors).toHaveLength(1);
-        expect(formErrors[0].message).toContain('Nom d\'élément de formulaire en double "email".');
+        expect(formErrors[0].message).toContain('Nom d\'élément de formulaire en double «\u00A0email\u00A0».');
       });
 
       it("allows multiple radio buttons with the same name", () => {
@@ -1304,7 +1304,7 @@ describe("HTML Syntax Checker", () => {
         const errors = checkHtmlSyntax(code, {}, "fr");
         const formErrors = errors.filter((e) => e.type === "FORM_RULE");
         expect(formErrors).toHaveLength(1);
-        expect(formErrors[0].message).toContain("L'élément <textarea> ne doit pas avoir d'attribut \"value\".");
+        expect(formErrors[0].message).toContain("L'élément <textarea> ne doit pas avoir d'attribut «\u00A0value\u00A0».");
       });
     });
 
