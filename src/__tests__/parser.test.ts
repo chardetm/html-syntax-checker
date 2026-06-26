@@ -1209,5 +1209,240 @@ describe("HTML Syntax Checker", () => {
       expect(idErrors[0].message).toContain('Duplicate ID "myId" found.');
     });
   });
+
+  describe("Form element validation rules", () => {
+    describe("Nested form elements (always active)", () => {
+      it("detects nested forms", () => {
+        const code = '<form><form></form></form>';
+        const errors = checkHtmlSyntax(code);
+        const formErrors = errors.filter((e) => e.type === "FORM_RULE");
+        expect(formErrors).toHaveLength(1);
+        expect(formErrors[0].message).toContain("Form elements cannot be nested.");
+        expect(formErrors[0].advice).toContain("Remove the nested <form> tag or close the outer form first.");
+      });
+
+      it("detects nested forms in French", () => {
+        const code = '<form><form></form></form>';
+        const errors = checkHtmlSyntax(code, {}, "fr");
+        const formErrors = errors.filter((e) => e.type === "FORM_RULE");
+        expect(formErrors).toHaveLength(1);
+        expect(formErrors[0].message).toContain("Les éléments de formulaire ne peuvent pas être imbriqués.");
+      });
+    });
+
+    describe("Name uniqueness for form elements (always active)", () => {
+      it("allows unique names", () => {
+        const code = '<input name="user"><input name="pass">';
+        const errors = checkHtmlSyntax(code);
+        expect(errors.filter((e) => e.type === "FORM_RULE")).toHaveLength(0);
+      });
+
+      it("detects duplicate names on non-exempt elements", () => {
+        const code = '<input name="email"><textarea name="email"></textarea>';
+        const errors = checkHtmlSyntax(code);
+        const formErrors = errors.filter((e) => e.type === "FORM_RULE");
+        expect(formErrors).toHaveLength(1);
+        expect(formErrors[0].message).toContain('Duplicate form element name "email".');
+        expect(formErrors[0].advice).toContain('already used by another form element at line 1.');
+      });
+
+      it("detects duplicate names in French", () => {
+        const code = '<input name="email"><textarea name="email"></textarea>';
+        const errors = checkHtmlSyntax(code, {}, "fr");
+        const formErrors = errors.filter((e) => e.type === "FORM_RULE");
+        expect(formErrors).toHaveLength(1);
+        expect(formErrors[0].message).toContain('Nom d\'élément de formulaire en double "email".');
+      });
+
+      it("allows multiple radio buttons with the same name", () => {
+        const code = '<input type="radio" name="sex"><input type="radio" name="sex">';
+        const errors = checkHtmlSyntax(code);
+        expect(errors.filter((e) => e.type === "FORM_RULE")).toHaveLength(0);
+      });
+
+      it("allows multiple checkboxes with the same name", () => {
+        const code = '<input type="checkbox" name="interest"><input type="checkbox" name="interest">';
+        const errors = checkHtmlSyntax(code);
+        expect(errors.filter((e) => e.type === "FORM_RULE")).toHaveLength(0);
+      });
+
+      it("detects conflict between radio and checkbox with the same name", () => {
+        const code = '<input type="radio" name="opt"><input type="checkbox" name="opt">';
+        const errors = checkHtmlSyntax(code);
+        const formErrors = errors.filter((e) => e.type === "FORM_RULE");
+        expect(formErrors).toHaveLength(1);
+      });
+
+      it("detects conflict between text input and radio with the same name", () => {
+        const code = '<input name="gender"><input type="radio" name="gender">';
+        const errors = checkHtmlSyntax(code);
+        const formErrors = errors.filter((e) => e.type === "FORM_RULE");
+        expect(formErrors).toHaveLength(1);
+      });
+    });
+
+    describe("Textarea value attribute check (always active)", () => {
+      it("detects value attribute on textarea", () => {
+        const code = '<textarea value="hello"></textarea>';
+        const errors = checkHtmlSyntax(code);
+        const formErrors = errors.filter((e) => e.type === "FORM_RULE");
+        expect(formErrors).toHaveLength(1);
+        expect(formErrors[0].message).toContain('The <textarea> element must not have a "value" attribute.');
+        // Ensure no duplicate ALLOWED_ATTRIBUTES error is reported
+        expect(errors.filter((e) => e.type === "ALLOWED_ATTRIBUTES")).toHaveLength(0);
+      });
+
+      it("detects value attribute on textarea even if custom attributes are allowed", () => {
+        const code = '<textarea value="hello"></textarea>';
+        const errors = checkHtmlSyntax(code, { allowCustomAttributes: true });
+        const formErrors = errors.filter((e) => e.type === "FORM_RULE");
+        expect(formErrors).toHaveLength(1);
+      });
+
+      it("detects value attribute on textarea in French", () => {
+        const code = '<textarea value="hello"></textarea>';
+        const errors = checkHtmlSyntax(code, {}, "fr");
+        const formErrors = errors.filter((e) => e.type === "FORM_RULE");
+        expect(formErrors).toHaveLength(1);
+        expect(formErrors[0].message).toContain("L'élément <textarea> ne doit pas avoir d'attribut \"value\".");
+      });
+    });
+
+    describe("requireFormControlsInForm option", () => {
+      it("allows controls outside form by default", () => {
+        const code = '<input><textarea></textarea><select></select>';
+        const errors = checkHtmlSyntax(code);
+        expect(errors.filter((e) => e.type === "FORM_RULE")).toHaveLength(0);
+      });
+
+      it("detects controls outside form when option is enabled", () => {
+        const code = '<input><textarea></textarea><select></select>';
+        const errors = checkHtmlSyntax(code, { requireFormControlsInForm: true });
+        const formErrors = errors.filter((e) => e.type === "FORM_RULE");
+        expect(formErrors).toHaveLength(3);
+        expect(formErrors[0].message).toContain("must be inside a <form> element.");
+      });
+
+      it("allows controls inside form when option is enabled", () => {
+        const code = '<form><input><textarea></textarea><select></select></form>';
+        const errors = checkHtmlSyntax(code, { requireFormControlsInForm: true });
+        expect(errors.filter((e) => e.type === "FORM_RULE")).toHaveLength(0);
+      });
+    });
+
+    describe("requireLabelForInteractiveControls option", () => {
+      it("allows controls without labels by default", () => {
+        const code = '<input type="text">';
+        const errors = checkHtmlSyntax(code);
+        expect(errors.filter((e) => e.type === "FORM_RULE")).toHaveLength(0);
+      });
+
+      it("detects control without label when option is enabled", () => {
+        const code = '<input type="text">';
+        const errors = checkHtmlSyntax(code, { requireLabelForInteractiveControls: true });
+        const formErrors = errors.filter((e) => e.type === "FORM_RULE");
+        expect(formErrors).toHaveLength(1);
+        expect(formErrors[0].message).toContain("must be associated with a <label>.");
+      });
+
+      it("allows control nested inside label", () => {
+        const code = '<label>User: <input type="text"></label>';
+        const errors = checkHtmlSyntax(code, { requireLabelForInteractiveControls: true });
+        expect(errors.filter((e) => e.type === "FORM_RULE")).toHaveLength(0);
+      });
+
+      it("allows control matching label by ID", () => {
+        const code = '<label for="usr">User</label><input id="usr" type="text">';
+        const errors = checkHtmlSyntax(code, { requireLabelForInteractiveControls: true });
+        expect(errors.filter((e) => e.type === "FORM_RULE")).toHaveLength(0);
+      });
+
+      it("allows non-interactive or submit inputs without label", () => {
+        const code = '<input type="submit"><input type="button"><input type="hidden">';
+        const errors = checkHtmlSyntax(code, { requireLabelForInteractiveControls: true });
+        expect(errors.filter((e) => e.type === "FORM_RULE")).toHaveLength(0);
+      });
+    });
+
+    describe("requireRadioButtonNameConsistency option", () => {
+      it("allows single radio button without consistency checks by default", () => {
+        const code = '<input type="radio"><input type="radio" name="foo">';
+        const errors = checkHtmlSyntax(code);
+        expect(errors.filter((e) => e.type === "FORM_RULE")).toHaveLength(0);
+      });
+
+      it("detects radio button missing name when enabled", () => {
+        const code = '<input type="radio">';
+        const errors = checkHtmlSyntax(code, { requireRadioButtonNameConsistency: true });
+        const formErrors = errors.filter((e) => e.type === "FORM_RULE");
+        expect(formErrors).toHaveLength(1);
+        expect(formErrors[0].message).toContain('Radio button is missing a "name" attribute.');
+      });
+
+      it("detects single radio button in a group when enabled", () => {
+        const code = '<input type="radio" name="choice">';
+        const errors = checkHtmlSyntax(code, { requireRadioButtonNameConsistency: true });
+        const formErrors = errors.filter((e) => e.type === "FORM_RULE");
+        expect(formErrors).toHaveLength(1);
+        expect(formErrors[0].message).toContain('Radio button group "choice" must contain at least two radio buttons.');
+      });
+
+      it("allows two or more radio buttons with same name when enabled", () => {
+        const code = '<input type="radio" name="choice"><input type="radio" name="choice">';
+        const errors = checkHtmlSyntax(code, { requireRadioButtonNameConsistency: true });
+        expect(errors.filter((e) => e.type === "FORM_RULE")).toHaveLength(0);
+      });
+    });
+
+    describe("requireExplicitButtonType option", () => {
+      it("allows button without type inside form by default", () => {
+        const code = '<form><button>Click</button></form>';
+        const errors = checkHtmlSyntax(code);
+        expect(errors.filter((e) => e.type === "FORM_RULE")).toHaveLength(0);
+      });
+
+      it("detects button without type inside form when enabled", () => {
+        const code = '<form><button>Click</button></form>';
+        const errors = checkHtmlSyntax(code, { requireExplicitButtonType: true });
+        const formErrors = errors.filter((e) => e.type === "FORM_RULE");
+        expect(formErrors).toHaveLength(1);
+        expect(formErrors[0].message).toContain('Buttons inside a form must have an explicit "type" attribute.');
+      });
+
+      it("allows button with type inside form when enabled", () => {
+        const code = '<form><button type="button">Click</button><button type="submit">Send</button></form>';
+        const errors = checkHtmlSyntax(code, { requireExplicitButtonType: true });
+        expect(errors.filter((e) => e.type === "FORM_RULE")).toHaveLength(0);
+      });
+
+      it("allows button without type outside form when enabled", () => {
+        const code = '<button>Click</button>';
+        const errors = checkHtmlSyntax(code, { requireExplicitButtonType: true });
+        expect(errors.filter((e) => e.type === "FORM_RULE")).toHaveLength(0);
+      });
+    });
+
+    describe("requireSelectHasOption option", () => {
+      it("allows select without option by default", () => {
+        const code = '<select></select>';
+        const errors = checkHtmlSyntax(code);
+        expect(errors.filter((e) => e.type === "FORM_RULE")).toHaveLength(0);
+      });
+
+      it("detects empty select when enabled", () => {
+        const code = '<select></select>';
+        const errors = checkHtmlSyntax(code, { requireSelectHasOption: true });
+        const formErrors = errors.filter((e) => e.type === "FORM_RULE");
+        expect(formErrors).toHaveLength(1);
+        expect(formErrors[0].message).toContain('The <select> element must contain at least one <option>.');
+      });
+
+      it("allows select with options when enabled", () => {
+        const code = '<select><option value="1">1</option></select>';
+        const errors = checkHtmlSyntax(code, { requireSelectHasOption: true });
+        expect(errors.filter((e) => e.type === "FORM_RULE")).toHaveLength(0);
+      });
+    });
+  });
 });
 

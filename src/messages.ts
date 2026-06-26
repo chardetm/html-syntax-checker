@@ -49,6 +49,10 @@ const errorTypeNames: Record<CheckerErrorType, { en: string; fr: string }> = {
   DUPLICATE_ID: {
     en: 'Duplicate ID',
     fr: 'Identifiant en double'
+  },
+  FORM_RULE: {
+    en: 'Form rule violation',
+    fr: 'Violation de règle de formulaire'
   }
 };
 
@@ -573,5 +577,86 @@ export const getMessage = {
     advice: lang === 'fr'
       ? `L'identifiant "${id}" a déjà été défini à la ligne ${line}. Les identifiants doivent être uniques dans tout le document.`
       : `The ID "${id}" was already defined at line ${line}. IDs must be unique across the entire document.`
+  }),
+
+  nestedForm: (lang: Language) => ({
+    message: lang === 'fr'
+      ? 'Les éléments de formulaire ne peuvent pas être imbriqués.'
+      : 'Form elements cannot be nested.',
+    advice: lang === 'fr'
+      ? 'Retirez la balise <form> imbriquée ou fermez d\'abord le formulaire parent.'
+      : 'Remove the nested <form> tag or close the outer form first.'
+  }),
+
+  duplicateName: (lang: Language, name: string, line: number) => ({
+    message: lang === 'fr'
+      ? `Nom d'élément de formulaire en double "${name}".`
+      : `Duplicate form element name "${name}".`,
+    advice: lang === 'fr'
+      ? `Le nom "${name}" est déjà utilisé par un autre élément de formulaire à la ligne ${line}. Les noms des éléments de formulaire doivent être uniques (sauf pour les boutons radio et les cases à cocher).`
+      : `The name "${name}" is already used by another form element at line ${line}. Form element names must be unique (except for radio buttons and checkboxes).`
+  }),
+
+  textareaValueAttribute: (lang: Language) => ({
+    message: lang === 'fr'
+      ? `L'élément <textarea> ne doit pas avoir d'attribut "value".`
+      : `The <textarea> element must not have a "value" attribute.`,
+    advice: lang === 'fr'
+      ? `Pour définir une valeur par défaut pour un <textarea>, placez le texte entre les balises ouvrante et fermante (ex : <textarea>Texte par défaut</textarea>).`
+      : `To set a default value for a <textarea>, place the text inside the opening and closing tags (e.g., <textarea>Default text</textarea>).`
+  }),
+
+  formControlOutsideForm: (lang: Language, name: string) => ({
+    message: lang === 'fr'
+      ? `Le contrôle de formulaire <${name}> doit être à l'intérieur d'un élément <form>.`
+      : `Form control <${name}> must be inside a <form> element.`,
+    advice: lang === 'fr'
+      ? `Enveloppez cet élément dans une balise <form> ou retirez-le.`
+      : `Wrap this element in a <form> tag or remove it.`
+  }),
+
+  labelAssociationRequired: (lang: Language, name: string) => ({
+    message: lang === 'fr'
+      ? `Le contrôle de formulaire interactif <${name}> doit être associé à un <label>.`
+      : `Interactive form control <${name}> must be associated with a <label>.`,
+    advice: lang === 'fr'
+      ? `Imbriquez le contrôle dans un élément <label> ou ajoutez un attribut "for" à un <label> correspondant à l'attribut "id" du contrôle.`
+      : `Nest the control inside a <label> element or add a "for" attribute to a <label> matching the control's "id" attribute.`
+  }),
+
+  radioButtonMissingName: (lang: Language) => ({
+    message: lang === 'fr'
+      ? `Le bouton radio n'a pas d'attribut "name".`
+      : `Radio button is missing a "name" attribute.`,
+    advice: lang === 'fr'
+      ? `Ajoutez un attribut "name" pour regrouper ce bouton radio avec d'autres.`
+      : `Add a "name" attribute to group this radio button with others.`
+  }),
+
+  radioButtonSingleInGroup: (lang: Language, name: string) => ({
+    message: lang === 'fr'
+      ? `Le groupe de boutons radio "${name}" doit contenir au moins deux boutons radio.`
+      : `Radio button group "${name}" must contain at least two radio buttons.`,
+    advice: lang === 'fr'
+      ? `Ajoutez un autre bouton radio avec le nom "${name}", ou utilisez une case à cocher si une seule option est nécessaire.`
+      : `Add another radio button with the name "${name}", or use a checkbox if only one option is needed.`
+  }),
+
+  buttonMissingType: (lang: Language) => ({
+    message: lang === 'fr'
+      ? `Les boutons à l'intérieur d'un formulaire doivent avoir un attribut "type" explicite.`
+      : `Buttons inside a form must have an explicit "type" attribute.`,
+    advice: lang === 'fr'
+      ? `Ajoutez type="submit", type="button" ou type="reset" à l'élément <button>.`
+      : `Add type="submit", type="button", or type="reset" to the <button> element.`
+  }),
+
+  selectEmptyOptions: (lang: Language) => ({
+    message: lang === 'fr'
+      ? `L'élément <select> doit contenir au moins une option.`
+      : `The <select> element must contain at least one <option>.`,
+    advice: lang === 'fr'
+      ? `Ajoutez un ou plusieurs éléments <option> à l'intérieur du <select>.`
+      : `Add one or more <option> elements inside the <select>.`
   })
 };

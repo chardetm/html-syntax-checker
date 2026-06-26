@@ -15,7 +15,8 @@ export const CHECKER_ERROR_TYPES = [
   'CLOSING_TAG_MISMATCH',
   'MISSING_CHARSET',
   'MISSING_TITLE',
-  'DUPLICATE_ID'
+  'DUPLICATE_ID',
+  'FORM_RULE'
 ] as const;
 
 export type CheckerErrorType = (typeof CHECKER_ERROR_TYPES)[number];
@@ -51,4 +52,9 @@ export interface CheckerOptions {
   checkFullStructure?: boolean;
   checkCharset?: boolean;
   checkTitle?: boolean;
+  requireFormControlsInForm?: boolean;
+  requireLabelForInteractiveControls?: boolean;
+  requireRadioButtonNameConsistency?: boolean;
+  requireExplicitButtonType?: boolean;
+  requireSelectHasOption?: boolean;
 }

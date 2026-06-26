@@ -29,12 +29,50 @@ const DEFAULT_OPTIONS: Required<CheckerOptions> = {
   allowMixedcaseAttributes: false,
   checkFullStructure: false,
   checkCharset: false,
-  checkTitle: false
+  checkTitle: false,
+  requireFormControlsInForm: false,
+  requireLabelForInteractiveControls: false,
+  requireRadioButtonNameConsistency: false,
+  requireExplicitButtonType: false,
+  requireSelectHasOption: false
 };
 
 export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lang: Language = 'en'): CheckerError[] {
   const errors: CheckerError[] = [];
   const seenIds = new Map<string, { line: number }>();
+
+  // Form rule tracking variables
+  const formNameUsages: Array<{
+    name: string;
+    tag: string;
+    type?: string;
+    token: Token;
+    attrToken: Token;
+  }> = [];
+
+  const interactiveControls: Array<{
+    tag: string;
+    nestedInLabel: boolean;
+    id: string | null;
+    token: Token;
+  }> = [];
+
+  const labelFors = new Set<string>();
+
+  const radioButtons: Array<{
+    name: string | null;
+    token: Token;
+  }> = [];
+
+  const selectElements: Array<{
+    token: Token;
+    optionCount: number;
+  }> = [];
+
+  const activeSelectStack: Array<{
+    token: Token;
+    optionCount: number;
+  }> = [];
 
   // 1. Validate Options Compatibility
   if (userOptions.allowedTags && userOptions.forbiddenTags) {
@@ -259,6 +297,41 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
         }
       }
 
+      // Form rules
+      if (!insideSvg) {
+        if (tagLower === 'form') {
+          const isNestedForm = stack.some(x => x.name.toLowerCase() === 'form');
+          if (isNestedForm) {
+            const { message, advice } = getMessage.nestedForm(lang);
+            errors.push({
+              type: 'FORM_RULE',
+              message,
+              advice,
+              location: {
+                start: token.start,
+                end: token.end
+              }
+            });
+          }
+        }
+
+        if (options.requireFormControlsInForm) {
+          const isFormControl = ['input', 'textarea', 'select'].includes(tagLower);
+          if (isFormControl && !stack.some(x => x.name.toLowerCase() === 'form')) {
+            const { message, advice } = getMessage.formControlOutsideForm(lang, name);
+            errors.push({
+              type: 'FORM_RULE',
+              message,
+              advice,
+              location: {
+                start: token.start,
+                end: token.end
+              }
+            });
+          }
+        }
+      }
+
       // B. Allowed / Forbidden tags
       if (!insideSvg) {
         if (options.allowedTags) {
@@ -431,6 +504,135 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
         }
       }
 
+      // Textarea cannot have value attribute
+      if (tagLower === 'textarea' && !insideSvg) {
+        const valueAttr = tagAttrs.find(a => a.name.toLowerCase() === 'value');
+        if (valueAttr) {
+          const { message, advice } = getMessage.textareaValueAttribute(lang);
+          errors.push({
+            type: 'FORM_RULE',
+            message,
+            advice,
+            location: {
+              start: valueAttr.start,
+              end: valueAttr.end
+            }
+          });
+        }
+      }
+
+      // Collect form elements with name attributes
+      const isFormControl = ['input', 'textarea', 'select', 'button'].includes(tagLower);
+      if (isFormControl && !insideSvg) {
+        const nameAttr = tagAttrs.find(a => a.name.toLowerCase() === 'name');
+        if (nameAttr && nameAttr.value !== null && nameAttr.value.trim() !== '') {
+          const typeAttr = tagAttrs.find(a => a.name.toLowerCase() === 'type');
+          const typeVal = typeAttr?.value?.toLowerCase();
+          formNameUsages.push({
+            name: nameAttr.value,
+            tag: tagLower,
+            type: typeVal,
+            token,
+            attrToken: nameAttr
+          });
+        }
+      }
+
+      // Label association collection
+      if (options.requireLabelForInteractiveControls && !insideSvg) {
+        const isInteractiveControl =
+          tagLower === 'textarea' ||
+          tagLower === 'select' ||
+          (tagLower === 'input' && (() => {
+            const typeAttr = tagAttrs.find(a => a.name.toLowerCase() === 'type');
+            const typeVal = typeAttr?.value?.toLowerCase() || 'text';
+            return !['submit', 'button', 'hidden'].includes(typeVal);
+          })());
+
+        if (isInteractiveControl) {
+          const idAttr = tagAttrs.find(a => a.name.toLowerCase() === 'id');
+          const nestedInLabel = stack.some(x => x.name.toLowerCase() === 'label');
+          interactiveControls.push({
+            tag: name,
+            nestedInLabel,
+            id: idAttr?.value ?? null,
+            token
+          });
+        }
+      }
+
+      if (tagLower === 'label' && !insideSvg) {
+        const forAttr = tagAttrs.find(a => a.name.toLowerCase() === 'for');
+        if (forAttr && forAttr.value !== null && forAttr.value.trim() !== '') {
+          labelFors.add(forAttr.value);
+        }
+      }
+
+      // Radio button name consistency (check for missing name attribute)
+      if (tagLower === 'input' && !insideSvg) {
+        const typeAttr = tagAttrs.find(a => a.name.toLowerCase() === 'type');
+        const typeVal = typeAttr?.value?.toLowerCase();
+        if (typeVal === 'radio') {
+          const nameAttr = tagAttrs.find(a => a.name.toLowerCase() === 'name');
+          const nameVal = nameAttr?.value ?? null;
+          if (options.requireRadioButtonNameConsistency) {
+            if (nameVal === null || nameVal.trim() === '') {
+              const { message, advice } = getMessage.radioButtonMissingName(lang);
+              errors.push({
+                type: 'FORM_RULE',
+                message,
+                advice,
+                location: {
+                  start: token.start,
+                  end: token.end
+                }
+              });
+            } else {
+              radioButtons.push({
+                name: nameVal,
+                token
+              });
+            }
+          }
+        }
+      }
+
+      // Buttons inside a form explicit type check
+      if (tagLower === 'button' && !insideSvg) {
+        const insideForm = stack.some(x => x.name.toLowerCase() === 'form');
+        if (insideForm && options.requireExplicitButtonType) {
+          const typeAttr = tagAttrs.find(a => a.name.toLowerCase() === 'type');
+          const typeVal = typeAttr?.value?.toLowerCase();
+          if (!typeVal || !['submit', 'button', 'reset'].includes(typeVal)) {
+            const { message, advice } = getMessage.buttonMissingType(lang);
+            errors.push({
+              type: 'FORM_RULE',
+              message,
+              advice,
+              location: {
+                start: token.start,
+                end: token.end
+              }
+            });
+          }
+        }
+      }
+
+      // Select element has at least one option tracking
+      if (tagLower === 'select' && !insideSvg) {
+        const selectEntry = { token, optionCount: 0 };
+        selectElements.push(selectEntry);
+        if (!token.isSelfClosing) {
+          activeSelectStack.push(selectEntry);
+        }
+      }
+
+      if (tagLower === 'option' && !insideSvg) {
+        if (activeSelectStack.length > 0) {
+          activeSelectStack[activeSelectStack.length - 1].optionCount++;
+        }
+      }
+
       // Duplicate ID Check
       for (const attr of tagAttrs) {
         if (attr.name.toLowerCase() === 'id' && attr.value !== null) {
@@ -458,6 +660,11 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
           if (attr.type !== 'ATTRIBUTE') continue;
           const attrName = attr.name;
           const attrNameLower = attrName.toLowerCase();
+
+          // Skip general check for value attribute on textarea (handled by FORM_RULE check)
+          if (tagLower === 'textarea' && attrNameLower === 'value') {
+            continue;
+          }
 
           // Casing
           const isAttrLower = attrName === attrName.toLowerCase();
@@ -584,6 +791,10 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
       const name = token.name;
       const tagLower = name.toLowerCase();
       const insideSvg = stack.some(x => x.name.toLowerCase() === 'svg');
+
+      if (tagLower === 'select' && !insideSvg) {
+        activeSelectStack.pop();
+      }
       const isSvgTag = tagLower === 'svg';
       const effectiveVoid = insideSvg ? false : VOID_TAGS.has(tagLower);
 
@@ -849,6 +1060,94 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
       message,
       advice
     });
+  }
+
+  // Form rule post-pass checks
+  // Check Duplicate Form Element Names
+  for (let k = 0; k < formNameUsages.length; k++) {
+    const usage = formNameUsages[k];
+    const prevUsages = formNameUsages.slice(0, k);
+    const conflict = prevUsages.find(p => p.name === usage.name);
+    if (conflict) {
+      const bothRadios = (usage.tag === 'input' && usage.type === 'radio') && (conflict.tag === 'input' && conflict.type === 'radio');
+      const bothCheckboxes = (usage.tag === 'input' && usage.type === 'checkbox') && (conflict.tag === 'input' && conflict.type === 'checkbox');
+      if (!bothRadios && !bothCheckboxes) {
+        const { message, advice } = getMessage.duplicateName(lang, usage.name, conflict.token.start.line);
+        errors.push({
+          type: 'FORM_RULE',
+          message,
+          advice,
+          location: {
+            start: usage.attrToken.start,
+            end: usage.attrToken.end
+          }
+        });
+      }
+    }
+  }
+
+  // Label Association
+  if (options.requireLabelForInteractiveControls) {
+    for (const ctrl of interactiveControls) {
+      let isAssociated = ctrl.nestedInLabel;
+      if (!isAssociated && ctrl.id !== null && labelFors.has(ctrl.id)) {
+        isAssociated = true;
+      }
+      if (!isAssociated) {
+        const { message, advice } = getMessage.labelAssociationRequired(lang, ctrl.tag);
+        errors.push({
+          type: 'FORM_RULE',
+          message,
+          advice,
+          location: {
+            start: ctrl.token.start,
+            end: ctrl.token.end
+          }
+        });
+      }
+    }
+  }
+
+  // Radio button name consistency (check for multiple radio buttons in group)
+  if (options.requireRadioButtonNameConsistency) {
+    const radioNameCounts = new Map<string, number>();
+    for (const rb of radioButtons) {
+      if (rb.name) {
+        radioNameCounts.set(rb.name, (radioNameCounts.get(rb.name) || 0) + 1);
+      }
+    }
+    for (const rb of radioButtons) {
+      if (rb.name && (radioNameCounts.get(rb.name) || 0) < 2) {
+        const { message, advice } = getMessage.radioButtonSingleInGroup(lang, rb.name);
+        errors.push({
+          type: 'FORM_RULE',
+          message,
+          advice,
+          location: {
+            start: rb.token.start,
+            end: rb.token.end
+          }
+        });
+      }
+    }
+  }
+
+  // Select element must contain at least one option
+  if (options.requireSelectHasOption) {
+    for (const select of selectElements) {
+      if (select.optionCount === 0) {
+        const { message, advice } = getMessage.selectEmptyOptions(lang);
+        errors.push({
+          type: 'FORM_RULE',
+          message,
+          advice,
+          location: {
+            start: select.token.start,
+            end: select.token.end
+          }
+        });
+      }
+    }
   }
 
   // 8. Sort errors by start position
