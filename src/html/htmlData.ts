@@ -61,7 +61,7 @@ export const ELEMENT_STANDARD_ATTRIBUTES: Record<string, string[]> = {
   'link': ['href', 'rel', 'type', 'media', 'sizes', 'crossorigin', 'integrity', 'as'],
   'meta': ['name', 'content', 'charset', 'http-equiv'],
   'script': ['src', 'type', 'async', 'defer', 'crossorigin', 'integrity', 'nomodule'],
-  'iframe': ['src', 'srcdoc', 'name', 'width', 'height', 'sandbox', 'allow', 'allowfullscreen', 'loading'],
+  'iframe': ['src', 'srcdoc', 'name', 'width', 'height', 'sandbox', 'allow', 'allowfullscreen', 'loading', 'referrerpolicy'],
   'video': ['src', 'poster', 'preload', 'autoplay', 'loop', 'muted', 'controls', 'width', 'height', 'playsinline', 'crossorigin'],
   'audio': ['src', 'preload', 'autoplay', 'loop', 'muted', 'controls', 'crossorigin'],
   'source': ['src', 'type', 'srcset', 'sizes', 'media'],
@@ -82,7 +82,8 @@ export const ELEMENT_STANDARD_ATTRIBUTES: Record<string, string[]> = {
 // Deprecated/Obsolete attributes
 export const DEPRECATED_ATTRIBUTES = new Set([
   'align', 'background', 'bgcolor', 'border', 'cellpadding', 'cellspacing',
-  'char', 'charoff', 'clear', 'color', 'compact', 'frame', 'frameborder',
+  'char', 'charoff', 'clear', 'color', 'compact', 'frame',
   'hspace', 'vspace', 'marginheight', 'marginwidth', 'noshade', 'nowrap',
   'rules', 'scrolling', 'size', 'valign', 'vlink', 'alink', 'link', 'text'
+  // 'frameborder' not included because YouTube uses it when embedding a video
 ]);
