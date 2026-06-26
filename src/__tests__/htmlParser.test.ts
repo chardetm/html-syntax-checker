@@ -1508,6 +1508,55 @@ describe("HTML Syntax Checker", () => {
         const err = errors.find(e => e.type === "CSS_VALUE_VIOLATION")!;
         expect(err.message).toContain("L'utilisation de «\u00A0!important\u00A0» n'est pas autorisée.");
       });
+
+      it("correctly identifies missing semicolon errors inside HTML style blocks", () => {
+        const html = [
+          "<!DOCTYPE html>",
+          "<html>",
+          "<head>",
+          "  <style>",
+          "    h1 {",
+          "      color: red",
+          "      width: 100%",
+          "    }",
+          "  </style>",
+          "</head>",
+          "<body></body>",
+          "</html>"
+        ].join("\n");
+        const errors = checkHtmlSyntax(html, { cssOptions: {} });
+        expect(errors.filter(e => e.type === "CSS_PARSE_ERROR")).toHaveLength(1);
+        const err = errors.find(e => e.type === "CSS_PARSE_ERROR")!;
+        expect(err.message).toContain("Missing semicolon");
+        expect(err.location?.start.line).toBe(7);
+      });
+
+      it("respects allowMultiplePropertiesPerLine option inside HTML style blocks", () => {
+        const html = [
+          "<!DOCTYPE html>",
+          "<html>",
+          "<head>",
+          "  <style>",
+          "    h1 { color: red; width: 100%; }",
+          "  </style>",
+          "</head>",
+          "<body></body>",
+          "</html>"
+        ].join("\n");
+        
+        // Allowed by default
+        let errors = checkHtmlSyntax(html, { cssOptions: {} });
+        expect(errors.filter(e => e.type === "CSS_STRUCTURE_VIOLATION")).toHaveLength(0);
+
+        // Forbidden
+        errors = checkHtmlSyntax(html, {
+          cssOptions: { allowMultiplePropertiesPerLine: false }
+        });
+        expect(errors.filter(e => e.type === "CSS_STRUCTURE_VIOLATION")).toHaveLength(1);
+        const err = errors.find(e => e.type === "CSS_STRUCTURE_VIOLATION")!;
+        expect(err.message).toContain("Each property must be on its own line");
+        expect(err.location?.start.line).toBe(5);
+      });
     });
   });
 });
