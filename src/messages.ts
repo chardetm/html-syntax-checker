@@ -535,6 +535,15 @@ export const getMessage = {
       : 'An HTML document must have only one <body> section.'
   }),
 
+  multipleDoctypes: (lang: Language) => ({
+    message: lang === 'fr'
+      ? 'Plusieurs déclarations DOCTYPE ont été trouvées.'
+      : 'Multiple DOCTYPE declarations were found.',
+    advice: lang === 'fr'
+      ? 'Un document HTML ne doit avoir qu’une seule déclaration DOCTYPE au tout début.'
+      : 'An HTML document must have only one DOCTYPE declaration at the very beginning.'
+  }),
+
   missingCharset: (lang: Language) => ({
     message: lang === 'fr'
       ? 'La balise de spécification de l’encodage <meta charset="..."> est manquante dans le <head>.'

@@ -14,7 +14,7 @@ import {
 const DEFAULT_OPTIONS: Required<CheckerOptions> = {
   allowedTags: null,
   forbiddenTags: null,
-  allowDeprecated_tags: true,
+  allowDeprecatedTags: true,
   allowCustomTags: false,
   xhtmlSelfClosing: 'allowed',
   allowLowercaseTags: true,
@@ -51,8 +51,10 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
         type: 'PARSE_ERROR',
         message: token.message,
         advice: token.advice,
-        start: token.start,
-        end: token.end
+        location: {
+          start: token.start,
+          end: token.end
+        }
       });
     }
   }
@@ -71,9 +73,7 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
       errors.push({
         type: 'DOCUMENT_STRUCTURE',
         message,
-        advice,
-        start: { line: 1, column: 1 },
-        end: { line: 1, column: 1 }
+        advice
       });
     } else {
       const rawDoc = firstToken.raw.trim().toLowerCase();
@@ -84,8 +84,28 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
           type: 'DOCUMENT_STRUCTURE',
           message,
           advice,
-          start: firstToken.start,
-          end: firstToken.end
+          location: {
+            start: firstToken.start,
+            end: firstToken.end
+          }
+        });
+      }
+    }
+
+    // Check for multiple DOCTYPE declarations
+    const doctypeTokens = validTokens.filter(t => t.type === 'DOCTYPE');
+    if (doctypeTokens.length > 1) {
+      for (let i = 1; i < doctypeTokens.length; i++) {
+        const doctypeToken = doctypeTokens[i];
+        const { message, advice } = getMessage.multipleDoctypes(lang);
+        errors.push({
+          type: 'DOCUMENT_STRUCTURE',
+          message,
+          advice,
+          location: {
+            start: doctypeToken.start,
+            end: doctypeToken.end
+          }
         });
       }
     }
@@ -100,6 +120,9 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
   let headCloseCount = 0;
   let bodyStartCount = 0;
   let bodyCloseCount = 0;
+  const bodyTokens: Token[] = [];
+  const htmlTokens: Token[] = [];
+  const headTokens: Token[] = [];
 
   let hasCharset = false;
   let hasTitle = false;
@@ -123,16 +146,20 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
       if (options.checkFullStructure) {
         if (tagLower === 'html') {
           htmlStartCount++;
+          htmlTokens.push(token);
         } else if (tagLower === 'head') {
           headStartCount++;
+          headTokens.push(token);
           if (!insideHtml) {
             const { message, advice } = getMessage.headOutsideHtml(lang);
             errors.push({
               type: 'DOCUMENT_STRUCTURE',
               message,
               advice,
-              start: token.start,
-              end: token.end
+              location: {
+                start: token.start,
+                end: token.end
+              }
             });
           }
           if (insideBody) {
@@ -141,20 +168,25 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
               type: 'DOCUMENT_STRUCTURE',
               message,
               advice,
-              start: token.start,
-              end: token.end
+              location: {
+                start: token.start,
+                end: token.end
+              }
             });
           }
         } else if (tagLower === 'body') {
           bodyStartCount++;
+          bodyTokens.push(token);
           if (!insideHtml) {
             const { message, advice } = getMessage.bodyOutsideHtml(lang);
             errors.push({
               type: 'DOCUMENT_STRUCTURE',
               message,
               advice,
-              start: token.start,
-              end: token.end
+              location: {
+                start: token.start,
+                end: token.end
+              }
             });
           }
           if (insideHead) {
@@ -163,8 +195,10 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
               type: 'DOCUMENT_STRUCTURE',
               message,
               advice,
-              start: token.start,
-              end: token.end
+              location: {
+                start: token.start,
+                end: token.end
+              }
             });
           }
         } else {
@@ -175,8 +209,10 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
               type: 'DOCUMENT_STRUCTURE',
               message,
               advice,
-              start: token.start,
-              end: token.end
+              location: {
+                start: token.start,
+                end: token.end
+              }
             });
           } else if (!insideHead && !insideBody) {
             const { message, advice } = getMessage.tagDirectChildOfHtml(lang, name);
@@ -184,8 +220,10 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
               type: 'DOCUMENT_STRUCTURE',
               message,
               advice,
-              start: token.start,
-              end: token.end
+              location: {
+                start: token.start,
+                end: token.end
+              }
             });
           } else if (insideHead) {
             const allowedInHead = ['title', 'meta', 'link', 'style', 'script', 'noscript', 'base'];
@@ -195,8 +233,10 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
                 type: 'DOCUMENT_STRUCTURE',
                 message,
                 advice,
-                start: token.start,
-                end: token.end
+                location: {
+                  start: token.start,
+                  end: token.end
+                }
               });
             }
           } else if (insideBody) {
@@ -206,8 +246,10 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
                 type: 'DOCUMENT_STRUCTURE',
                 message,
                 advice,
-                start: token.start,
-                end: token.end
+                location: {
+                  start: token.start,
+                  end: token.end
+                }
               });
             }
           }
@@ -223,8 +265,10 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
             type: 'ALLOWED_TAGS',
             message,
             advice,
-            start: token.start,
-            end: token.end
+            location: {
+              start: token.start,
+              end: token.end
+            }
           });
         }
       } else if (options.forbiddenTags) {
@@ -235,19 +279,23 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
             type: 'ALLOWED_TAGS',
             message,
             advice,
-            start: token.start,
-            end: token.end
+            location: {
+              start: token.start,
+              end: token.end
+            }
           });
         }
       } else {
-        if (isDeprecated && options.allowDeprecated_tags === false) {
+        if (isDeprecated && options.allowDeprecatedTags === false) {
           const { message, advice } = getMessage.tagDeprecated(lang, name);
           errors.push({
             type: 'ALLOWED_TAGS',
             message,
             advice,
-            start: token.start,
-            end: token.end
+            location: {
+              start: token.start,
+              end: token.end
+            }
           });
         }
         if (isCustom && options.allowCustomTags === false) {
@@ -256,8 +304,10 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
             type: 'ALLOWED_TAGS',
             message,
             advice,
-            start: token.start,
-            end: token.end
+            location: {
+              start: token.start,
+              end: token.end
+            }
           });
         }
       }
@@ -273,8 +323,10 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
           type: 'CASE',
           message,
           advice,
-          start: token.start,
-          end: token.end
+          location: {
+            start: token.start,
+            end: token.end
+          }
         });
       } else if (isAllUpper && options.allowUppercaseTags === false) {
         const { message, advice } = getMessage.tagCaseUppercaseForbidden(lang, name);
@@ -282,8 +334,10 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
           type: 'CASE',
           message,
           advice,
-          start: token.start,
-          end: token.end
+          location: {
+            start: token.start,
+            end: token.end
+          }
         });
       } else if (isMixed && options.allowMixedcaseTags === false) {
         const { message, advice } = getMessage.tagCaseMixedForbidden(lang, name);
@@ -291,8 +345,10 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
           type: 'CASE',
           message,
           advice,
-          start: token.start,
-          end: token.end
+          location: {
+            start: token.start,
+            end: token.end
+          }
         });
       }
 
@@ -305,8 +361,10 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
             type: 'XHTML_SELF_CLOSING',
             message,
             advice,
-            start: token.start,
-            end: token.end
+            location: {
+              start: token.start,
+              end: token.end
+            }
           });
         } else if (options.xhtmlSelfClosing === 'forbidden' && token.isSelfClosing) {
           const { message, advice } = getMessage.voidElementMustNotSelfClose(lang, name);
@@ -314,8 +372,10 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
             type: 'XHTML_SELF_CLOSING',
             message,
             advice,
-            start: token.start,
-            end: token.end
+            location: {
+              start: token.start,
+              end: token.end
+            }
           });
         }
       } else {
@@ -325,8 +385,10 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
             type: 'INVALID_CLOSING_TAG',
             message,
             advice,
-            start: token.start,
-            end: token.end
+            location: {
+              start: token.start,
+              end: token.end
+            }
           });
         }
       }
@@ -376,8 +438,10 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
             type: 'CASE',
             message,
             advice,
-            start: attr.nameStart,
-            end: attr.nameEnd
+            location: {
+              start: attr.nameStart,
+              end: attr.nameEnd
+            }
           });
         } else if (isAttrUpper && options.allowUppercaseAttributes === false) {
           const { message, advice } = getMessage.attributeUppercaseForbidden(lang, attrName, name);
@@ -385,8 +449,10 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
             type: 'CASE',
             message,
             advice,
-            start: attr.nameStart,
-            end: attr.nameEnd
+            location: {
+              start: attr.nameStart,
+              end: attr.nameEnd
+            }
           });
         } else if (isAttrMixed && options.allowMixedcaseAttributes === false) {
           const { message, advice } = getMessage.attributeMixedForbidden(lang, attrName, name);
@@ -394,8 +460,10 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
             type: 'CASE',
             message,
             advice,
-            start: attr.nameStart,
-            end: attr.nameEnd
+            location: {
+              start: attr.nameStart,
+              end: attr.nameEnd
+            }
           });
         }
 
@@ -407,8 +475,10 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
             type: 'ALLOWED_ATTRIBUTES',
             message,
             advice,
-            start: attr.start,
-            end: attr.end
+            location: {
+              start: attr.start,
+              end: attr.end
+            }
           });
         } else {
           // Deprecated
@@ -419,8 +489,10 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
               type: 'ALLOWED_ATTRIBUTES',
               message,
               advice,
-              start: attr.start,
-              end: attr.end
+              location: {
+                start: attr.start,
+                end: attr.end
+              }
             });
           } else {
             // Custom
@@ -434,8 +506,10 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
                 type: 'ALLOWED_ATTRIBUTES',
                 message,
                 advice,
-                start: attr.start,
-                end: attr.end
+                location: {
+                  start: attr.start,
+                  end: attr.end
+                }
               });
             }
           }
@@ -457,8 +531,10 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
                 type: 'MISSING_REQUIRED_ATTRIBUTE',
                 message,
                 advice,
-                start: token.start,
-                end: token.end
+                location: {
+                  start: token.start,
+                  end: token.end
+                }
               });
             }
           }
@@ -487,8 +563,10 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
           type: 'INVALID_CLOSING_TAG',
           message,
           advice,
-          start: token.start,
-          end: token.end
+          location: {
+            start: token.start,
+            end: token.end
+          }
         });
         continue;
       }
@@ -504,8 +582,10 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
           type: 'CASE',
           message,
           advice,
-          start: token.start,
-          end: token.end
+          location: {
+            start: token.start,
+            end: token.end
+          }
         });
       } else if (isAllUpper && options.allowUppercaseTags === false) {
         const { message, advice } = getMessage.closingTagCaseUppercaseForbidden(lang, name);
@@ -513,8 +593,10 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
           type: 'CASE',
           message,
           advice,
-          start: token.start,
-          end: token.end
+          location: {
+            start: token.start,
+            end: token.end
+          }
         });
       } else if (isMixed && options.allowMixedcaseTags === false) {
         const { message, advice } = getMessage.closingTagCaseMixedForbidden(lang, name);
@@ -522,8 +604,10 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
           type: 'CASE',
           message,
           advice,
-          start: token.start,
-          end: token.end
+          location: {
+            start: token.start,
+            end: token.end
+          }
         });
       }
 
@@ -534,8 +618,10 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
           type: 'INVALID_CLOSING_TAG',
           message,
           advice,
-          start: token.start,
-          end: token.end
+          location: {
+            start: token.start,
+            end: token.end
+          }
         });
       } else {
         let matchIdx = -1;
@@ -555,8 +641,10 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
               type: 'CLOSING_TAG_MISMATCH',
               message,
               advice,
-              start: unclosed.token.start,
-              end: unclosed.token.end
+              location: {
+                start: unclosed.token.start,
+                end: unclosed.token.end
+              }
             });
           }
           stack.splice(matchIdx);
@@ -567,8 +655,10 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
             type: 'CLOSING_TAG_MISMATCH',
             message,
             advice,
-            start: token.start,
-            end: token.end
+            location: {
+              start: token.start,
+              end: token.end
+            }
           });
         }
       }
@@ -589,8 +679,10 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
                 type: 'DOCUMENT_STRUCTURE',
                 message,
                 advice,
-                start: token.start,
-                end: token.end
+                location: {
+                  start: token.start,
+                  end: token.end
+                }
               });
             }
           } else if (topTagName === 'html') {
@@ -599,8 +691,10 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
               type: 'DOCUMENT_STRUCTURE',
               message,
               advice,
-              start: token.start,
-              end: token.end
+              location: {
+                start: token.start,
+                end: token.end
+              }
             });
           } else if (topTagName === 'head') {
             const { message, advice } = getMessage.visibleTextInHead(lang);
@@ -608,8 +702,10 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
               type: 'DOCUMENT_STRUCTURE',
               message,
               advice,
-              start: token.start,
-              end: token.end
+              location: {
+                start: token.start,
+                end: token.end
+              }
             });
           }
         }
@@ -624,8 +720,10 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
       type: 'CLOSING_TAG_MISMATCH',
       message,
       advice,
-      start: unclosed.token.start,
-      end: unclosed.token.end
+      location: {
+        start: unclosed.token.start,
+        end: unclosed.token.end
+      }
     });
   }
 
@@ -636,18 +734,19 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
       errors.push({
         type: 'DOCUMENT_STRUCTURE',
         message,
-        advice,
-        start: { line: 1, column: 1 },
-        end: { line: 1, column: 1 }
+        advice
       });
     } else if (htmlStartCount > 1) {
       const { message, advice } = getMessage.multipleHtmlTags(lang);
+      const errorToken = htmlTokens[1] || htmlTokens[0];
       errors.push({
         type: 'DOCUMENT_STRUCTURE',
         message,
         advice,
-        start: { line: 1, column: 1 },
-        end: { line: 1, column: 1 }
+        location: errorToken ? {
+          start: errorToken.start,
+          end: errorToken.end
+        } : undefined
       });
     }
 
@@ -656,18 +755,19 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
       errors.push({
         type: 'DOCUMENT_STRUCTURE',
         message,
-        advice,
-        start: { line: 1, column: 1 },
-        end: { line: 1, column: 1 }
+        advice
       });
     } else if (headStartCount > 1) {
       const { message, advice } = getMessage.multipleHeadSections(lang);
+      const errorToken = headTokens[1] || headTokens[0];
       errors.push({
         type: 'DOCUMENT_STRUCTURE',
         message,
         advice,
-        start: { line: 1, column: 1 },
-        end: { line: 1, column: 1 }
+        location: errorToken ? {
+          start: errorToken.start,
+          end: errorToken.end
+        } : undefined
       });
     }
 
@@ -676,18 +776,19 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
       errors.push({
         type: 'DOCUMENT_STRUCTURE',
         message,
-        advice,
-        start: { line: 1, column: 1 },
-        end: { line: 1, column: 1 }
+        advice
       });
     } else if (bodyStartCount > 1) {
       const { message, advice } = getMessage.multipleBodySections(lang);
+      const errorToken = bodyTokens[1] || bodyTokens[0];
       errors.push({
         type: 'DOCUMENT_STRUCTURE',
         message,
         advice,
-        start: { line: 1, column: 1 },
-        end: { line: 1, column: 1 }
+        location: errorToken ? {
+          start: errorToken.start,
+          end: errorToken.end
+        } : undefined
       });
     }
   }
@@ -698,9 +799,7 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
     errors.push({
       type: 'MISSING_CHARSET',
       message,
-      advice,
-      start: { line: 1, column: 1 },
-      end: { line: 1, column: 1 }
+      advice
     });
   }
 
@@ -709,18 +808,20 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
     errors.push({
       type: 'MISSING_TITLE',
       message,
-      advice,
-      start: { line: 1, column: 1 },
-      end: { line: 1, column: 1 }
+      advice
     });
   }
 
   // 8. Sort errors by start position
   errors.sort((a, b) => {
-    if (a.start.line !== b.start.line) {
-      return a.start.line - b.start.line;
+    const aLine = a.location?.start.line ?? 0;
+    const bLine = b.location?.start.line ?? 0;
+    if (aLine !== bLine) {
+      return aLine - bLine;
     }
-    return a.start.column - b.start.column;
+    const aCol = a.location?.start.column ?? 0;
+    const bCol = b.location?.start.column ?? 0;
+    return aCol - bCol;
   });
 
   return errors;

@@ -21,7 +21,7 @@ This project is licensed under the terms of the MIT license.
 ## Installation
 
 ```bash
-npm install html-syntax-checker
+npm install @chardetm/html-syntax-checker
 ```
 
 ## Usage
@@ -50,7 +50,10 @@ const errors = checkHtmlSyntax(htmlCode, options);
 
 if (errors.length > 0) {
   errors.forEach(err => {
-    console.log(`[${err.type}] Ligne ${err.start.line}, Col ${err.start.column} : ${err.message}`);
+    const pos = err.location
+      ? `Ligne ${err.location.start.line}, Col ${err.location.start.column}`
+      : "Emplacement inconnu";
+    console.log(`[${err.type}] ${pos} : ${err.message}`);
     if (err.advice) {
       console.log(`Conseil : ${err.advice}`);
     }
@@ -71,7 +74,7 @@ export interface CheckerOptions {
   forbiddenTags?: string[];              // Default: null
 
   // Tag classification
-  allowDeprecated_tags?: boolean;        // Default: true. Set to false to reject tags like <center>, <font>, etc.
+  allowDeprecatedTags?: boolean;        // Default: true. Set to false to reject tags like <center>, <font>, etc.
   allowCustomTags?: boolean;             // Default: false. Set to true to allow non-standard tags.
 
   // XHTML syntax
@@ -109,8 +112,10 @@ export interface CheckerError {
   type: string;       // PARSE_ERROR, ALLOWED_TAGS, CASE, CLOSING_TAG_MISMATCH, INVALID_CLOSING_TAG, DOCUMENT_STRUCTURE, MISSING_REQUIRED_ATTRIBUTE, MISSING_CHARSET, MISSING_TITLE...
   message: string;    // Clear error message in the chosen language (English by default)
   advice?: string;    // Optional tip/advice in the chosen language (English by default) to fix the error
-  start: Position;    // { line: number, column: number } (1-indexed)
-  end: Position;      // { line: number, column: number } (1-indexed)
+  location?: {        // Optional location of the error (not all errors have a location)
+    start: Position;  // { line: number, column: number } (1-indexed)
+    end: Position;    // { line: number, column: number } (1-indexed)
+  }
 }
 ```
 

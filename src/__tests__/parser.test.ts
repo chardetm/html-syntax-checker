@@ -93,9 +93,9 @@ describe("HTML Syntax Checker", () => {
       }).toThrow("allowedTags");
     });
 
-    it("checks allowDeprecated_tags option", () => {
+    it("checks allowDeprecatedTags option", () => {
       const code = "<center>Texte</center>";
-      const errors = checkHtmlSyntax(code, { allowDeprecated_tags: false });
+      const errors = checkHtmlSyntax(code, { allowDeprecatedTags: false });
       expect(errors).toHaveLength(1);
       expect(errors[0].type).toBe("ALLOWED_TAGS");
       expect(errors[0].message).toContain("obsolete/deprecated");
@@ -276,6 +276,7 @@ describe("HTML Syntax Checker", () => {
       expect(errors).toHaveLength(1);
       expect(errors[0].type).toBe("DOCUMENT_STRUCTURE");
       expect(errors[0].message).toContain("DOCTYPE declaration is missing");
+      expect(errors[0].location).toBeUndefined();
     });
 
     it("detects invalid DOCTYPE format", () => {
@@ -331,6 +332,99 @@ describe("HTML Syntax Checker", () => {
       expect(errors[0].type).toBe("DOCUMENT_STRUCTURE");
       expect(errors[0].message).toContain("in the <head> section");
     });
+
+    it("detects multiple body sections and points to the duplicate body tag position", () => {
+      const code = `<!DOCTYPE html>
+<html>
+  <head>
+    <title>Titre</title>
+  </head>
+  <body>
+    <p>First body</p>
+  </body>
+  <body>
+    <p>Second body</p>
+  </body>
+</html>`;
+      const errors = checkHtmlSyntax(code, { checkFullStructure: true });
+      const bodyErrors = errors.filter(e => e.message.includes("Multiple <body> tags"));
+      expect(bodyErrors).toHaveLength(1);
+      expect(bodyErrors[0].type).toBe("DOCUMENT_STRUCTURE");
+      expect(bodyErrors[0].location?.start).toEqual({ line: 9, column: 3 });
+      expect(bodyErrors[0].location?.end).toEqual({ line: 9, column: 8 });
+    });
+
+    it("detects multiple html tags and points to the duplicate html tag position", () => {
+      const code = `<!DOCTYPE html>
+<html>
+  <head>
+    <title>Titre</title>
+  </head>
+  <body></body>
+</html>
+<html>
+  <body></body>
+</html>`;
+      const errors = checkHtmlSyntax(code, { checkFullStructure: true });
+      const htmlErrors = errors.filter(e => e.message.includes("Multiple <html> tags"));
+      expect(htmlErrors).toHaveLength(1);
+      expect(htmlErrors[0].type).toBe("DOCUMENT_STRUCTURE");
+      expect(htmlErrors[0].location?.start).toEqual({ line: 8, column: 1 });
+      expect(htmlErrors[0].location?.end).toEqual({ line: 8, column: 6 });
+    });
+
+    it("detects multiple head sections and points to the duplicate head tag position", () => {
+      const code = `<!DOCTYPE html>
+<html>
+  <head>
+    <title>Titre</title>
+  </head>
+  <head>
+    <meta charset="utf-8">
+  </head>
+  <body></body>
+</html>`;
+      const errors = checkHtmlSyntax(code, { checkFullStructure: true });
+      const headErrors = errors.filter(e => e.message.includes("Multiple <head> tags"));
+      expect(headErrors).toHaveLength(1);
+      expect(headErrors[0].type).toBe("DOCUMENT_STRUCTURE");
+      expect(headErrors[0].location?.start).toEqual({ line: 6, column: 3 });
+      expect(headErrors[0].location?.end).toEqual({ line: 6, column: 8 });
+    });
+
+    it("detects multiple DOCTYPE declarations and points to the duplicate DOCTYPE positions", () => {
+      const code = `<!DOCTYPE html>
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Titre</title>
+  </head>
+  <body></body>
+</html>`;
+      const errors = checkHtmlSyntax(code, { checkFullStructure: true });
+      const docErrors = errors.filter(e => e.message.includes("Multiple DOCTYPE declarations"));
+      expect(docErrors).toHaveLength(1);
+      expect(docErrors[0].type).toBe("DOCUMENT_STRUCTURE");
+      expect(docErrors[0].location?.start).toEqual({ line: 2, column: 1 });
+      expect(docErrors[0].location?.end).toEqual({ line: 2, column: 15 });
+    });
+
+    it("detects missing html, head, and body tags and asserts they have no location", () => {
+      const code = `<!DOCTYPE html><p>no structure</p>`;
+      const errors = checkHtmlSyntax(code, { checkFullStructure: true });
+      const htmlErrors = errors.filter(e => e.message.includes("main <html> tag is missing") || e.message.includes("balise principale"));
+      const headErrors = errors.filter(e => e.message.includes("<head> section is missing") || e.message.includes("section <head> est manquante"));
+      const bodyErrors = errors.filter(e => e.message.includes("<body> section is missing") || e.message.includes("section <body> est manquante"));
+
+      expect(htmlErrors).toHaveLength(1);
+      expect(htmlErrors[0].location).toBeUndefined();
+
+      expect(headErrors).toHaveLength(1);
+      expect(headErrors[0].location).toBeUndefined();
+
+      expect(bodyErrors).toHaveLength(1);
+      expect(bodyErrors[0].location).toBeUndefined();
+    });
   });
 
   describe("Charset and Title Required Checks", () => {
@@ -339,6 +433,7 @@ describe("HTML Syntax Checker", () => {
       const errors = checkHtmlSyntax(code, { checkCharset: true });
       expect(errors).toHaveLength(1);
       expect(errors[0].type).toBe("MISSING_CHARSET");
+      expect(errors[0].location).toBeUndefined();
     });
 
     it("checks missing title inside head", () => {
@@ -346,6 +441,7 @@ describe("HTML Syntax Checker", () => {
       const errors = checkHtmlSyntax(code, { checkTitle: true });
       expect(errors).toHaveLength(1);
       expect(errors[0].type).toBe("MISSING_TITLE");
+      expect(errors[0].location).toBeUndefined();
     });
 
     it("checks title tag exists but is empty", () => {
@@ -353,6 +449,7 @@ describe("HTML Syntax Checker", () => {
       const errors = checkHtmlSyntax(code, { checkTitle: true });
       expect(errors).toHaveLength(1);
       expect(errors[0].type).toBe("MISSING_TITLE");
+      expect(errors[0].location).toBeUndefined();
     });
   });
 
@@ -409,7 +506,7 @@ describe("HTML Syntax Checker", () => {
       const code = "<center>Texte</center>";
       const errors = checkHtmlSyntax(
         code,
-        { allowDeprecated_tags: false },
+        { allowDeprecatedTags: false },
         "fr",
       );
       expect(errors[0].message).toContain("obsolète/dépréciée");
@@ -650,7 +747,7 @@ describe("HTML Syntax Checker", () => {
 
     it("does NOT flag a deprecated tag as a custom tag (it has its own category)", () => {
       // <center> is deprecated, not custom — with allowCustomTags: false it should
-      // NOT produce an ALLOWED_TAGS error (only allowDeprecated_tags: false would).
+      // NOT produce an ALLOWED_TAGS error (only allowDeprecatedTags: false would).
       const errors = checkHtmlSyntax("<center>text</center>", {
         allowCustomTags: false,
       });
@@ -986,7 +1083,7 @@ describe("HTML Syntax Checker", () => {
       it("accepts uppercase and lowercase but not mixed-case by default", () => {
         const code = '<div class="a" CLASS="b" tabIndex="0"></div>';
         const errors = checkHtmlSyntax(code);
-      console.log(errors);
+        console.log(errors);
         expect(errors.filter((e) => e.type === "CASE")).toHaveLength(1);
         expect(errors[0].message).toContain("tabIndex");
       });

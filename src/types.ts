@@ -23,8 +23,10 @@ export interface CheckerError {
   type: CheckerErrorType;
   message: string;
   advice?: string;
-  start: Position;
-  end: Position;
+  location?: {
+    start: Position;
+    end: Position;
+  };
 }
 
 export type Language = 'en' | 'fr';
@@ -32,7 +34,7 @@ export type Language = 'en' | 'fr';
 export interface CheckerOptions {
   allowedTags?: string[] | null;
   forbiddenTags?: string[] | null;
-  allowDeprecated_tags?: boolean;
+  allowDeprecatedTags?: boolean;
   allowCustomTags?: boolean;
   xhtmlSelfClosing?: 'allowed' | 'forced' | 'forbidden';
   allowLowercaseTags?: boolean;
