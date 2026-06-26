@@ -14,7 +14,8 @@ export const CHECKER_ERROR_TYPES = [
   'MISSING_REQUIRED_ATTRIBUTE',
   'CLOSING_TAG_MISMATCH',
   'MISSING_CHARSET',
-  'MISSING_TITLE'
+  'MISSING_TITLE',
+  'DUPLICATE_ID'
 ] as const;
 
 export type CheckerErrorType = (typeof CHECKER_ERROR_TYPES)[number];

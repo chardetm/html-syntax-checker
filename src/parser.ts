@@ -34,6 +34,7 @@ const DEFAULT_OPTIONS: Required<CheckerOptions> = {
 
 export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lang: Language = 'en'): CheckerError[] {
   const errors: CheckerError[] = [];
+  const seenIds = new Map<string, { line: number }>();
 
   // 1. Validate Options Compatibility
   if (userOptions.allowedTags && userOptions.forbiddenTags) {
@@ -426,6 +427,28 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
           const nextT = validTokens[i + 1];
           if (nextT.type === 'TEXT' && nextT.value.trim() !== '') {
             titleHasContent = true;
+          }
+        }
+      }
+
+      // Duplicate ID Check
+      for (const attr of tagAttrs) {
+        if (attr.name.toLowerCase() === 'id' && attr.value !== null) {
+          const idVal = attr.value;
+          if (seenIds.has(idVal)) {
+            const firstDef = seenIds.get(idVal)!;
+            const { message, advice } = getMessage.duplicateId(lang, idVal, firstDef.line);
+            errors.push({
+              type: 'DUPLICATE_ID',
+              message,
+              advice,
+              location: {
+                start: attr.start,
+                end: attr.end
+              }
+            });
+          } else {
+            seenIds.set(idVal, { line: attr.start.line });
           }
         }
       }

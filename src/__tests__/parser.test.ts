@@ -8,6 +8,8 @@ describe("HTML Syntax Checker", () => {
       expect(getErrorTypeName("PARSE_ERROR", "fr")).toBe("Erreur de syntaxe");
       expect(getErrorTypeName("MISSING_TITLE", "en")).toBe("Missing title");
       expect(getErrorTypeName("MISSING_TITLE", "fr")).toBe("Titre manquant");
+      expect(getErrorTypeName("DUPLICATE_ID", "en")).toBe("Duplicate ID");
+      expect(getErrorTypeName("DUPLICATE_ID", "fr")).toBe("Identifiant en double");
     });
   });
 
@@ -1151,6 +1153,60 @@ describe("HTML Syntax Checker", () => {
         allowCustomAttributes: false,
       });
       expect(errors.filter((e) => e.type === "ALLOWED_TAGS" || e.type === "ALLOWED_ATTRIBUTES")).toHaveLength(0);
+    });
+  });
+
+  describe("Duplicate ID validation rule", () => {
+    it("allows unique IDs in a document", () => {
+      const code = '<div id="first"></div><span id="second"></span>';
+      const errors = checkHtmlSyntax(code);
+      expect(errors).toHaveLength(0);
+    });
+
+    it("detects duplicate IDs in a document", () => {
+      const code = '<div id="test"></div><span id="test"></span>';
+      const errors = checkHtmlSyntax(code);
+      const idErrors = errors.filter((e) => e.type === "DUPLICATE_ID");
+      expect(idErrors).toHaveLength(1);
+      expect(idErrors[0].message).toContain('Duplicate ID "test" found.');
+      expect(idErrors[0].advice).toContain('The ID "test" was already defined at line 1.');
+      expect(idErrors[0].location?.start.line).toBe(1);
+    });
+
+    it("detects duplicate IDs in a document with French messages", () => {
+      const code = '<div id="test"></div><span id="test"></span>';
+      const errors = checkHtmlSyntax(code, {}, "fr");
+      const idErrors = errors.filter((e) => e.type === "DUPLICATE_ID");
+      expect(idErrors).toHaveLength(1);
+      expect(idErrors[0].message).toContain('L\'identifiant "test" est déjà utilisé.');
+      expect(idErrors[0].advice).toContain('L\'identifiant "test" a déjà été défini à la ligne 1.');
+    });
+
+    it("detects duplicate IDs across standard elements and SVG elements", () => {
+      const code = '<div id="my-id"></div><svg><rect id="my-id" /></svg>';
+      const errors = checkHtmlSyntax(code);
+      const idErrors = errors.filter((e) => e.type === "DUPLICATE_ID");
+      expect(idErrors).toHaveLength(1);
+      expect(idErrors[0].message).toContain('Duplicate ID "my-id" found.');
+    });
+
+    it("handles multiple occurrences of the same duplicate ID", () => {
+      const code = '<div id="dup"></div><span id="dup"></span><p id="dup"></p>';
+      const errors = checkHtmlSyntax(code);
+      const idErrors = errors.filter((e) => e.type === "DUPLICATE_ID");
+      expect(idErrors).toHaveLength(2);
+      expect(idErrors[0].advice).toContain('defined at line 1');
+      expect(idErrors[1].advice).toContain('defined at line 1');
+    });
+
+    it("is case-sensitive for ID values but case-insensitive for attribute names", () => {
+      const code = '<div id="myId"></div><span ID="myid"></span><p Id="myId"></p>';
+      const errors = checkHtmlSyntax(code);
+      const idErrors = errors.filter((e) => e.type === "DUPLICATE_ID");
+      // "myId" and "myid" are different (case-sensitive values).
+      // "myId" (first) and "myId" (third) are duplicate.
+      expect(idErrors).toHaveLength(1);
+      expect(idErrors[0].message).toContain('Duplicate ID "myId" found.');
     });
   });
 });

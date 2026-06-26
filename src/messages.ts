@@ -45,6 +45,10 @@ const errorTypeNames: Record<CheckerErrorType, { en: string; fr: string }> = {
   MISSING_TITLE: {
     en: 'Missing title',
     fr: 'Titre manquant'
+  },
+  DUPLICATE_ID: {
+    en: 'Duplicate ID',
+    fr: 'Identifiant en double'
   }
 };
 
@@ -560,5 +564,14 @@ export const getMessage = {
     advice: lang === 'fr'
       ? 'Ajoutez une balise <title> avec le titre de votre page (ex : <title>Ma page web</title>) dans la section <head>.'
       : 'Add a <title> tag with your page title (e.g., <title>My Web Page</title>) inside the <head> section.'
+  }),
+
+  duplicateId: (lang: Language, id: string, line: number) => ({
+    message: lang === 'fr'
+      ? `L'identifiant "${id}" est déjà utilisé.`
+      : `Duplicate ID "${id}" found.`,
+    advice: lang === 'fr'
+      ? `L'identifiant "${id}" a déjà été défini à la ligne ${line}. Les identifiants doivent être uniques dans tout le document.`
+      : `The ID "${id}" was already defined at line ${line}. IDs must be unique across the entire document.`
   })
 };
