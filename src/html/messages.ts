@@ -1,4 +1,4 @@
-import { CheckerErrorType, Language } from './types';
+import { CheckerErrorType, Language } from '../types';
 export type { Language };
 
 const errorTypeNames: Record<CheckerErrorType, { en: string; fr: string }> = {
@@ -53,6 +53,30 @@ const errorTypeNames: Record<CheckerErrorType, { en: string; fr: string }> = {
   FORM_RULE: {
     en: 'Form rule violation',
     fr: 'Violation de règle de formulaire'
+  },
+  CSS_PARSE_ERROR: {
+    en: 'CSS syntax error',
+    fr: 'Erreur de syntaxe CSS'
+  },
+  CSS_SELECTOR_VIOLATION: {
+    en: 'CSS selector error',
+    fr: 'Erreur de sélecteur CSS'
+  },
+  CSS_PROPERTY_VIOLATION: {
+    en: 'CSS property error',
+    fr: 'Erreur de propriété CSS'
+  },
+  CSS_VALUE_VIOLATION: {
+    en: 'CSS value error',
+    fr: 'Erreur de valeur CSS'
+  },
+  CSS_CASE_VIOLATION: {
+    en: 'CSS case sensitivity error',
+    fr: 'Erreur de casse CSS'
+  },
+  CSS_STRUCTURE_VIOLATION: {
+    en: 'CSS structure error',
+    fr: 'Erreur de structure CSS'
   }
 };
 
@@ -359,7 +383,7 @@ export const getMessage = {
       ? `L'attribut «\u00A0${attrName}\u00A0» est déprécié/obsolète en HTML5.`
       : `The attribute "${attrName}" is deprecated/obsolete in HTML5.`,
     advice: lang === 'fr'
-      ? `Évitez d'utiliser des attributs de style ou de mise en forme obsolètes. Utilisez du CSS pour cela.`
+      ? `Évitiez d'utiliser des attributs de style ou de mise en forme obsolètes. Utilisez du CSS pour cela.`
       : `Avoid using obsolete styling or formatting attributes. Use CSS instead.`
   }),
 

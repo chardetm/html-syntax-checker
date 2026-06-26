@@ -1,7 +1,9 @@
-import { Lexer } from './lexer';
-import { checkHtml } from './parser';
-import { CheckerOptions, CheckerError, Language } from './types';
-export { getErrorTypeName } from './messages';
+import { Lexer } from './html/lexer';
+import { checkHtml } from './html/parser';
+import { CheckerOptions, CheckerError, Language, CSSCheckerOptions, CSSCheckerError } from './types';
+export { getErrorTypeName } from './html/messages';
+export { checkCssSyntax } from './css/parser';
+export { getCssErrorTypeName } from './css/messages';
 
 export function checkHtmlSyntax(code: string, options?: CheckerOptions, lang?: Language): CheckerError[] {
   const chosenLang: Language = lang ?? 'en';
@@ -11,4 +13,4 @@ export function checkHtmlSyntax(code: string, options?: CheckerOptions, lang?: L
 }
 
 export * from './types';
-export { Lexer } from './lexer';
+export { Lexer } from './html/lexer';

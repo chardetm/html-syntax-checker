@@ -1443,6 +1443,73 @@ describe("HTML Syntax Checker", () => {
         expect(errors.filter((e) => e.type === "FORM_RULE")).toHaveLength(0);
       });
     });
+
+    describe("Integration with CSS syntax checker for <style> blocks", () => {
+      it("correctly identifies CSS syntax errors and maps their locations", () => {
+        const html = [
+          "<!DOCTYPE html>",
+          "<html>",
+          "<head>",
+          "  <style>",
+          "    h1 {",
+          "      color: ; /* Syntax error: missing value */",
+          "    }",
+          "  </style>",
+          "</head>",
+          "<body></body>",
+          "</html>"
+        ].join("\n");
+        const errors = checkHtmlSyntax(html, { cssOptions: {} });
+        expect(errors.filter(e => e.type === "CSS_PARSE_ERROR")).toHaveLength(1);
+        const err = errors.find(e => e.type === "CSS_PARSE_ERROR")!;
+        expect(err.location?.start.line).toBe(6);
+        // "color: ;" starts at column 7, value starts at 14. 
+        // Let's verify exactly what is reported:
+        expect(err.location?.start.line).toBe(6);
+      });
+
+      it("respects cssOptions passed into HTML checker options", () => {
+        const html = [
+          "<!DOCTYPE html>",
+          "<html>",
+          "<head>",
+          "  <style>",
+          "    #header { color: red; }",
+          "  </style>",
+          "</head>",
+          "<body></body>",
+          "</html>"
+        ].join("\n");
+        // Disable ID selectors
+        const errors = checkHtmlSyntax(html, {
+          cssOptions: { allowIdSelectors: false }
+        });
+        expect(errors.filter(e => e.type === "CSS_SELECTOR_VIOLATION")).toHaveLength(1);
+        const err = errors.find(e => e.type === "CSS_SELECTOR_VIOLATION")!;
+        expect(err.location?.start.line).toBe(5);
+        expect(err.location?.start.column).toBe(5); // "#header"
+      });
+
+      it("translates CSS errors inside HTML to French when requested", () => {
+        const html = [
+          "<!DOCTYPE html>",
+          "<html>",
+          "<head>",
+          "  <style>",
+          "    h1 { color: red !important; }",
+          "  </style>",
+          "</head>",
+          "<body></body>",
+          "</html>"
+        ].join("\n");
+        const errors = checkHtmlSyntax(html, {
+          cssOptions: { allowImportant: false }
+        }, "fr");
+        expect(errors.filter(e => e.type === "CSS_VALUE_VIOLATION")).toHaveLength(1);
+        const err = errors.find(e => e.type === "CSS_VALUE_VIOLATION")!;
+        expect(err.message).toContain("L'utilisation de «\u00A0!important\u00A0» n'est pas autorisée.");
+      });
+    });
   });
 });
 

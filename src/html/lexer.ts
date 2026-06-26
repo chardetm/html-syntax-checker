@@ -1,4 +1,4 @@
-import { Position, Language } from './types';
+import { Position, Language } from '../types';
 import { getMessage } from './messages';
 
 export type Token =

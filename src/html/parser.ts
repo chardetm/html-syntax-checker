@@ -1,6 +1,7 @@
 import { Token } from './lexer';
-import { CheckerOptions, CheckerError, Language } from './types';
+import { CheckerOptions, CheckerError, Language } from '../types';
 import { getMessage } from './messages';
+import { checkCssSyntax } from '../css/parser';
 import {
   STANDARD_TAGS,
   VOID_TAGS,
@@ -34,7 +35,8 @@ const DEFAULT_OPTIONS: Required<CheckerOptions> = {
   requireLabelForInteractiveControls: false,
   requireRadioButtonNameConsistency: false,
   requireExplicitButtonType: false,
-  requireSelectHasOption: false
+  requireSelectHasOption: false,
+  cssOptions: {}
 };
 
 export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lang: Language = 'en'): CheckerError[] {
@@ -78,7 +80,6 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
   if (userOptions.allowedTags && userOptions.forbiddenTags) {
     throw new Error(getMessage.incompatibleOptions(lang));
   }
-
 
   // 2. Resolve default options
   const options: Required<CheckerOptions> = { ...DEFAULT_OPTIONS, ...userOptions };
@@ -913,8 +914,46 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
       }
 
     } else if (token.type === 'TEXT') {
+      const topTagName = stack[stack.length - 1]?.name.toLowerCase();
+
+      // CSS parsing for style blocks
+      if (topTagName === 'style' && token.value.trim() !== '') {
+        const cssErrors = checkCssSyntax(token.value, options.cssOptions, lang);
+        for (const cssErr of cssErrors) {
+          let mappedLoc: CheckerError['location'] = undefined;
+          if (cssErr.location) {
+            const cssStart = cssErr.location.start;
+            const cssEnd = cssErr.location.end;
+            
+            const startLine = cssStart.line === 1
+              ? token.start.line
+              : token.start.line + cssStart.line - 1;
+            const startCol = cssStart.line === 1
+              ? token.start.column + cssStart.column - 1
+              : cssStart.column;
+
+            const endLine = cssEnd.line === 1
+              ? token.start.line
+              : token.start.line + cssEnd.line - 1;
+            const endCol = cssEnd.line === 1
+              ? token.start.column + cssEnd.column - 1
+              : cssEnd.column;
+
+            mappedLoc = {
+              start: { line: startLine, column: startCol },
+              end: { line: endLine, column: endCol }
+            };
+          }
+          errors.push({
+            type: cssErr.type,
+            message: cssErr.message,
+            advice: cssErr.advice,
+            location: mappedLoc
+          });
+        }
+      }
+
       if (token.value.trim() !== '') {
-        const topTagName = stack[stack.length - 1]?.name.toLowerCase();
         const insideHtml = stack.some(x => x.name.toLowerCase() === 'html');
         const insideHead = stack.some(x => x.name.toLowerCase() === 'head');
         const insideBody = stack.some(x => x.name.toLowerCase() === 'body');
