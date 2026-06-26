@@ -263,4 +263,62 @@ describe('CSS Syntax Checker', () => {
       expect(getCssErrorTypeName(errors[0].type, 'fr')).toBe('Erreur de valeur CSS');
     });
   });
+
+  describe('Semicolon Missing & Single Property Per Line Validation', () => {
+    it('detects missing semicolon between properties on the same line', () => {
+      const code = 'p { color: red width: 100%; }';
+      const errors = checkCssSyntax(code);
+      expect(errors).toHaveLength(1);
+      expect(errors[0].type).toBe('CSS_PARSE_ERROR');
+      expect(errors[0].message).toContain('Missing semicolon');
+    });
+
+    it('detects missing semicolon between properties on separate lines', () => {
+      const code = `
+        p {
+          color: red
+          width: 100%
+        }
+      `;
+      const errors = checkCssSyntax(code);
+      expect(errors).toHaveLength(1);
+      expect(errors[0].type).toBe('CSS_PARSE_ERROR');
+      expect(errors[0].message).toContain('Missing semicolon');
+    });
+
+    it('does not flag single property per line by default', () => {
+      const code = 'p { color: red; width: 100%; }';
+      const errors = checkCssSyntax(code);
+      expect(errors).toHaveLength(0);
+    });
+
+    it('flags multiple properties on the same line when allowMultiplePropertiesPerLine is false', () => {
+      const code = 'p { color: red; width: 100%; }';
+      const errors = checkCssSyntax(code, { allowMultiplePropertiesPerLine: false });
+      expect(errors).toHaveLength(1);
+      expect(errors[0].type).toBe('CSS_STRUCTURE_VIOLATION');
+      expect(errors[0].message).toContain('Each property must be on its own line');
+    });
+
+    it('allows multiple properties on different lines when allowMultiplePropertiesPerLine is false', () => {
+      const code = `
+        p {
+          color: red;
+          width: 100%;
+        }
+      `;
+      const errors = checkCssSyntax(code, { allowMultiplePropertiesPerLine: false });
+      expect(errors).toHaveLength(0);
+    });
+
+    it('supports French localization for missing semicolon and multiple properties per line', () => {
+      const code = 'p { color: red width: 100%; }';
+      const errors = checkCssSyntax(code, { allowMultiplePropertiesPerLine: false }, 'fr');
+      expect(errors[0].message).toContain('Point-virgule «\u00A0;\u00A0» manquant');
+
+      const code2 = 'p { color: red; width: 100%; }';
+      const errors2 = checkCssSyntax(code2, { allowMultiplePropertiesPerLine: false }, 'fr');
+      expect(errors2[0].message).toContain('Chaque propriété doit être sur sa propre ligne');
+    });
+  });
 });

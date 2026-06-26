@@ -31,7 +31,8 @@ const DEFAULT_CSS_OPTIONS: Required<CSSCheckerOptions> = {
   allowUppercaseProperties: true,
   allowMixedcaseProperties: false,
   allowEmptyRules: false,
-  allowDuplicateProperties: false
+  allowDuplicateProperties: false,
+  allowMultiplePropertiesPerLine: true
 };
 
 interface CSSDeclaration {
@@ -493,6 +494,27 @@ class CSSParser {
       });
     }
 
+    if (!this.options.allowMultiplePropertiesPerLine && declarations.length > 1) {
+      const linesSeen = new Map<number, CSSDeclaration>();
+      for (const decl of declarations) {
+        const line = decl.propertyStart.line;
+        if (linesSeen.has(line)) {
+          const { message, advice } = getCssMessage.multiplePropertiesPerLineForbidden(this.lang);
+          this.errors.push({
+            type: 'CSS_STRUCTURE_VIOLATION',
+            message,
+            advice,
+            location: {
+              start: decl.propertyStart,
+              end: decl.propertyEnd
+            }
+          });
+        } else {
+          linesSeen.set(line, decl);
+        }
+      }
+    }
+
     return { declarations, nestedRules };
   }
 
@@ -546,6 +568,33 @@ class CSSParser {
         }
         if (char === '}') {
           break;
+        }
+        if (char === ':') {
+          // Found a colon in value! This indicates a missing semicolon.
+          let backtrackIdx = this.index - 1;
+          while (backtrackIdx > valStart && /\s/.test(this.code[backtrackIdx])) {
+            backtrackIdx--;
+          }
+          const propNameEnd = backtrackIdx;
+          while (backtrackIdx > valStart && /[a-zA-Z0-9-]/.test(this.code[backtrackIdx])) {
+            backtrackIdx--;
+          }
+          const propNameStart = backtrackIdx + 1;
+
+          if (propNameStart > valStart && propNameEnd >= propNameStart) {
+            const { message, advice } = getCssMessage.missingSemicolon(this.lang);
+            this.errors.push({
+              type: 'CSS_PARSE_ERROR',
+              message,
+              advice,
+              location: {
+                start: this.getPos(propNameStart - 1),
+                end: this.getPos(propNameStart - 1)
+              }
+            });
+            this.index = propNameStart;
+            break;
+          }
         }
       }
       this.index++;

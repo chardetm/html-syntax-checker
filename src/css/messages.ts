@@ -354,5 +354,23 @@ export const getCssMessage = {
     advice: lang === 'fr'
       ? 'Les sélecteurs d’animation doivent être «\u00A0from\u00A0», «\u00A0to\u00A0» ou un pourcentage (ex\u00A0: «\u00A050%\u00A0»).'
       : 'Keyframe selectors must be "from", "to", or a percentage (e.g., "50%").'
+  }),
+
+  missingSemicolon: (lang: Language) => ({
+    message: lang === 'fr'
+      ? 'Point-virgule «\u00A0;\u00A0» manquant.'
+      : 'Missing semicolon ";".',
+    advice: lang === 'fr'
+      ? 'Ajoutez un point-virgule «\u00A0;\u00A0» à la fin de la déclaration.'
+      : 'Add a semicolon ";" at the end of the declaration.'
+  }),
+
+  multiplePropertiesPerLineForbidden: (lang: Language) => ({
+    message: lang === 'fr'
+      ? 'Chaque propriété doit être sur sa propre ligne.'
+      : 'Each property must be on its own line.',
+    advice: lang === 'fr'
+      ? 'Déplacez les propriétés supplémentaires vers de nouvelles lignes.'
+      : 'Move additional properties to new lines.'
   })
 };

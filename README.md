@@ -175,6 +175,7 @@ errors.forEach(err => {
 | `allowMixedcaseProperties` | `boolean` | `false` | Set to `true` to allow mixed casing in properties. |
 | `allowEmptyRules` | `boolean` | `false` | Flags empty css selector blocks. |
 | `allowDuplicateProperties` | `boolean` | `false` | Flags duplicate declarations of the same property in a block. |
+| `allowMultiplePropertiesPerLine` | `boolean` | `true` | Set to `false` to forbid having more than one property per line in the source code. |
 
 ---
 

@@ -75,6 +75,7 @@ export interface CSSCheckerOptions {
   // Structure & Empty Rules
   allowEmptyRules?: boolean;              // Default: false. Catches empty blocks like `h1 { }` left behind during coding.
   allowDuplicateProperties?: boolean;     // Default: false. Flags when a student accidentally writes `color: red;` twice in one block.
+  allowMultiplePropertiesPerLine?: boolean; // Default: true. Force single property per line if false.
 }
 
 export type CSSCheckerErrorType =
