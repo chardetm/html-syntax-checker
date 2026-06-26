@@ -1089,4 +1089,69 @@ describe("HTML Syntax Checker", () => {
       });
     });
   });
+
+  describe("SVG specific validation rules", () => {
+    it("allows standard svg tags and inner structure with no errors", () => {
+      const code = '<svg viewBox="0 0 100 100"><g><circle cx="10" cy="10" r="5" /><rect x="20" y="20" width="10" height="10"></rect></g></svg>';
+      const errors = checkHtmlSyntax(code);
+      expect(errors).toHaveLength(0);
+    });
+
+    it("allows self-closing svg itself", () => {
+      const code = '<svg />';
+      const errors = checkHtmlSyntax(code);
+      expect(errors).toHaveLength(0);
+    });
+
+    it("detects unclosed tags inside SVG at EOF", () => {
+      const code = '<svg viewBox="0 0 100 100"><g><circle cx="10" cy="10" r="5" /></svg>';
+      const errors = checkHtmlSyntax(code);
+      expect(errors.filter((e) => e.type === "CLOSING_TAG_MISMATCH")).toHaveLength(1);
+      expect(errors[0].message).toContain("<g>");
+    });
+
+    it("detects mismatched closing tags inside SVG", () => {
+      const code = '<svg><g></circle></svg>';
+      const errors = checkHtmlSyntax(code);
+      expect(errors.filter((e) => e.type === "CLOSING_TAG_MISMATCH")).toHaveLength(1);
+    });
+
+    it("requires closing tag if it does not end with /> inside SVG", () => {
+      const code = '<svg><circle cx="5" cy="5" r="5"><rect width="5" /></svg>';
+      const errors = checkHtmlSyntax(code);
+      expect(errors.filter((e) => e.type === "CLOSING_TAG_MISMATCH")).toHaveLength(1);
+      expect(errors[0].message).toContain("<circle>");
+    });
+
+    it("bypasses void tag constraints inside SVG", () => {
+      // In normal HTML, link and br are void tags and cannot have closing tags or be closed in certain modes.
+      // Inside SVG they are treated as normal tags.
+      const code = '<svg><link href="style.css"></link><br></br></svg>';
+      const errors = checkHtmlSyntax(code);
+      expect(errors).toHaveLength(0);
+    });
+
+    it("bypasses casing validations for tags and attributes inside SVG", () => {
+      const code = '<svg viewBox="0 0 100 100" strokeWidth="2"><clipPath id="x"><CLIPPATH id="y"></CLIPPATH></clipPath></svg>';
+      const errors = checkHtmlSyntax(code, {
+        allowUppercaseTags: false,
+        allowMixedcaseTags: false,
+        allowLowercaseTags: true,
+        allowLowercaseAttributes: true,
+        allowUppercaseAttributes: false,
+        allowMixedcaseAttributes: false,
+      });
+      expect(errors.filter((e) => e.type === "CASE")).toHaveLength(0);
+    });
+
+    it("bypasses custom and deprecated tag/attribute validations inside SVG", () => {
+      const code = '<svg custom-svg-attr="123"><custom-svg-tag custom-attr="xyz"></custom-svg-tag></svg>';
+      const errors = checkHtmlSyntax(code, {
+        allowCustomTags: false,
+        allowCustomAttributes: false,
+      });
+      expect(errors.filter((e) => e.type === "ALLOWED_TAGS" || e.type === "ALLOWED_ATTRIBUTES")).toHaveLength(0);
+    });
+  });
 });
+

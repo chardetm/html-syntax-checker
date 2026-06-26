@@ -14,7 +14,7 @@ export const STANDARD_TAGS = new Set([
   'button', 'datalist', 'fieldset', 'form', 'input', 'label', 'legend', 'meter', 'optgroup', 'option',
   'output', 'progress', 'select', 'textarea',
   'details', 'dialog', 'summary',
-  'template', 'slot', 'base'
+  'template', 'slot', 'base', 'svg'
 ]);
 
 // Void elements (must not have closing tags)

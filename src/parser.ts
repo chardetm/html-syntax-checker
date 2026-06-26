@@ -141,9 +141,11 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
       const insideHtml = stack.some(x => x.name.toLowerCase() === 'html');
       const insideHead = stack.some(x => x.name.toLowerCase() === 'head');
       const insideBody = stack.some(x => x.name.toLowerCase() === 'body');
+      const insideSvg = stack.some(x => x.name.toLowerCase() === 'svg');
+      const isSvgTag = tagLower === 'svg';
 
       // A. Structure placement checks
-      if (options.checkFullStructure) {
+      if (options.checkFullStructure && !insideSvg) {
         if (tagLower === 'html') {
           htmlStartCount++;
           htmlTokens.push(token);
@@ -257,108 +259,73 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
       }
 
       // B. Allowed / Forbidden tags
-      if (options.allowedTags) {
-        const isAllowed = options.allowedTags.some(t => t.toLowerCase() === tagLower);
-        if (!isAllowed) {
-          const { message, advice } = getMessage.tagNotAllowed(lang, name);
-          errors.push({
-            type: 'ALLOWED_TAGS',
-            message,
-            advice,
-            location: {
-              start: token.start,
-              end: token.end
-            }
-          });
-        }
-      } else if (options.forbiddenTags) {
-        const isForbidden = options.forbiddenTags.some(t => t.toLowerCase() === tagLower);
-        if (isForbidden) {
-          const { message, advice } = getMessage.tagForbidden(lang, name);
-          errors.push({
-            type: 'ALLOWED_TAGS',
-            message,
-            advice,
-            location: {
-              start: token.start,
-              end: token.end
-            }
-          });
-        }
-      } else {
-        if (isDeprecated && options.allowDeprecatedTags === false) {
-          const { message, advice } = getMessage.tagDeprecated(lang, name);
-          errors.push({
-            type: 'ALLOWED_TAGS',
-            message,
-            advice,
-            location: {
-              start: token.start,
-              end: token.end
-            }
-          });
-        }
-        if (isCustom && options.allowCustomTags === false) {
-          const { message, advice } = getMessage.customTagNotAllowed(lang, name);
-          errors.push({
-            type: 'ALLOWED_TAGS',
-            message,
-            advice,
-            location: {
-              start: token.start,
-              end: token.end
-            }
-          });
+      if (!insideSvg) {
+        if (options.allowedTags) {
+          const isAllowed = options.allowedTags.some(t => t.toLowerCase() === tagLower);
+          if (!isAllowed) {
+            const { message, advice } = getMessage.tagNotAllowed(lang, name);
+            errors.push({
+              type: 'ALLOWED_TAGS',
+              message,
+              advice,
+              location: {
+                start: token.start,
+                end: token.end
+              }
+            });
+          }
+        } else if (options.forbiddenTags) {
+          const isForbidden = options.forbiddenTags.some(t => t.toLowerCase() === tagLower);
+          if (isForbidden) {
+            const { message, advice } = getMessage.tagForbidden(lang, name);
+            errors.push({
+              type: 'ALLOWED_TAGS',
+              message,
+              advice,
+              location: {
+                start: token.start,
+                end: token.end
+              }
+            });
+          }
+        } else {
+          if (isDeprecated && options.allowDeprecatedTags === false) {
+            const { message, advice } = getMessage.tagDeprecated(lang, name);
+            errors.push({
+              type: 'ALLOWED_TAGS',
+              message,
+              advice,
+              location: {
+                start: token.start,
+                end: token.end
+              }
+            });
+          }
+          if (isCustom && options.allowCustomTags === false) {
+            const { message, advice } = getMessage.customTagNotAllowed(lang, name);
+            errors.push({
+              type: 'ALLOWED_TAGS',
+              message,
+              advice,
+              location: {
+                start: token.start,
+                end: token.end
+              }
+            });
+          }
         }
       }
 
       // C. Tag Casing check
-      const isAllLower = name === name.toLowerCase();
-      const isAllUpper = name === name.toUpperCase();
-      const isMixed = !isAllLower && !isAllUpper;
+      if (!insideSvg) {
+        const isAllLower = name === name.toLowerCase();
+        const isAllUpper = name === name.toUpperCase();
+        const isMixed = !isAllLower && !isAllUpper;
 
-      if (isAllLower && options.allowLowercaseTags === false) {
-        const { message, advice } = getMessage.tagCaseLowercaseForbidden(lang, name);
-        errors.push({
-          type: 'CASE',
-          message,
-          advice,
-          location: {
-            start: token.start,
-            end: token.end
-          }
-        });
-      } else if (isAllUpper && options.allowUppercaseTags === false) {
-        const { message, advice } = getMessage.tagCaseUppercaseForbidden(lang, name);
-        errors.push({
-          type: 'CASE',
-          message,
-          advice,
-          location: {
-            start: token.start,
-            end: token.end
-          }
-        });
-      } else if (isMixed && options.allowMixedcaseTags === false) {
-        const { message, advice } = getMessage.tagCaseMixedForbidden(lang, name);
-        errors.push({
-          type: 'CASE',
-          message,
-          advice,
-          location: {
-            start: token.start,
-            end: token.end
-          }
-        });
-      }
-
-      // D. XHTML self-closing on void / normal elements
-      const isVoid = VOID_TAGS.has(tagLower);
-      if (isVoid) {
-        if (options.xhtmlSelfClosing === 'forced' && !token.isSelfClosing) {
-          const { message, advice } = getMessage.voidElementMustSelfClose(lang, name);
+        if (isAllLower && options.allowLowercaseTags === false) {
+          const { message, advice } = getMessage.tagCaseLowercaseForbidden(lang, name);
           errors.push({
-            type: 'XHTML_SELF_CLOSING',
+            type: 'CASE',
             message,
             advice,
             location: {
@@ -366,10 +333,21 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
               end: token.end
             }
           });
-        } else if (options.xhtmlSelfClosing === 'forbidden' && token.isSelfClosing) {
-          const { message, advice } = getMessage.voidElementMustNotSelfClose(lang, name);
+        } else if (isAllUpper && options.allowUppercaseTags === false) {
+          const { message, advice } = getMessage.tagCaseUppercaseForbidden(lang, name);
           errors.push({
-            type: 'XHTML_SELF_CLOSING',
+            type: 'CASE',
+            message,
+            advice,
+            location: {
+              start: token.start,
+              end: token.end
+            }
+          });
+        } else if (isMixed && options.allowMixedcaseTags === false) {
+          const { message, advice } = getMessage.tagCaseMixedForbidden(lang, name);
+          errors.push({
+            type: 'CASE',
             message,
             advice,
             location: {
@@ -378,18 +356,48 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
             }
           });
         }
-      } else {
-        if (token.isSelfClosing) {
-          const { message, advice } = getMessage.normalElementCannotSelfClose(lang, name);
-          errors.push({
-            type: 'INVALID_CLOSING_TAG',
-            message,
-            advice,
-            location: {
-              start: token.start,
-              end: token.end
-            }
-          });
+      }
+
+      // D. XHTML self-closing on void / normal elements
+      if (!insideSvg && !isSvgTag) {
+        const isVoid = VOID_TAGS.has(tagLower);
+        if (isVoid) {
+          if (options.xhtmlSelfClosing === 'forced' && !token.isSelfClosing) {
+            const { message, advice } = getMessage.voidElementMustSelfClose(lang, name);
+            errors.push({
+              type: 'XHTML_SELF_CLOSING',
+              message,
+              advice,
+              location: {
+                start: token.start,
+                end: token.end
+              }
+            });
+          } else if (options.xhtmlSelfClosing === 'forbidden' && token.isSelfClosing) {
+            const { message, advice } = getMessage.voidElementMustNotSelfClose(lang, name);
+            errors.push({
+              type: 'XHTML_SELF_CLOSING',
+              message,
+              advice,
+              location: {
+                start: token.start,
+                end: token.end
+              }
+            });
+          }
+        } else {
+          if (token.isSelfClosing) {
+            const { message, advice } = getMessage.normalElementCannotSelfClose(lang, name);
+            errors.push({
+              type: 'INVALID_CLOSING_TAG',
+              message,
+              advice,
+              location: {
+                start: token.start,
+                end: token.end
+              }
+            });
+          }
         }
       }
 
@@ -422,69 +430,56 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
         }
       }
 
-      for (const attr of tagAttrs) {
-        if (attr.type !== 'ATTRIBUTE') continue;
-        const attrName = attr.name;
-        const attrNameLower = attrName.toLowerCase();
+      if (!insideSvg && !isSvgTag) {
+        for (const attr of tagAttrs) {
+          if (attr.type !== 'ATTRIBUTE') continue;
+          const attrName = attr.name;
+          const attrNameLower = attrName.toLowerCase();
 
-        // Casing
-        const isAttrLower = attrName === attrName.toLowerCase();
-        const isAttrUpper = attrName === attrName.toUpperCase();
-        const isAttrMixed = !isAttrLower && !isAttrUpper;
+          // Casing
+          const isAttrLower = attrName === attrName.toLowerCase();
+          const isAttrUpper = attrName === attrName.toUpperCase();
+          const isAttrMixed = !isAttrLower && !isAttrUpper;
 
-        if (isAttrLower && options.allowLowercaseAttributes === false) {
-          const { message, advice } = getMessage.attributeLowercaseForbidden(lang, attrName, name);
-          errors.push({
-            type: 'CASE',
-            message,
-            advice,
-            location: {
-              start: attr.nameStart,
-              end: attr.nameEnd
-            }
-          });
-        } else if (isAttrUpper && options.allowUppercaseAttributes === false) {
-          const { message, advice } = getMessage.attributeUppercaseForbidden(lang, attrName, name);
-          errors.push({
-            type: 'CASE',
-            message,
-            advice,
-            location: {
-              start: attr.nameStart,
-              end: attr.nameEnd
-            }
-          });
-        } else if (isAttrMixed && options.allowMixedcaseAttributes === false) {
-          const { message, advice } = getMessage.attributeMixedForbidden(lang, attrName, name);
-          errors.push({
-            type: 'CASE',
-            message,
-            advice,
-            location: {
-              start: attr.nameStart,
-              end: attr.nameEnd
-            }
-          });
-        }
+          if (isAttrLower && options.allowLowercaseAttributes === false) {
+            const { message, advice } = getMessage.attributeLowercaseForbidden(lang, attrName, name);
+            errors.push({
+              type: 'CASE',
+              message,
+              advice,
+              location: {
+                start: attr.nameStart,
+                end: attr.nameEnd
+              }
+            });
+          } else if (isAttrUpper && options.allowUppercaseAttributes === false) {
+            const { message, advice } = getMessage.attributeUppercaseForbidden(lang, attrName, name);
+            errors.push({
+              type: 'CASE',
+              message,
+              advice,
+              location: {
+                start: attr.nameStart,
+                end: attr.nameEnd
+              }
+            });
+          } else if (isAttrMixed && options.allowMixedcaseAttributes === false) {
+            const { message, advice } = getMessage.attributeMixedForbidden(lang, attrName, name);
+            errors.push({
+              type: 'CASE',
+              message,
+              advice,
+              location: {
+                start: attr.nameStart,
+                end: attr.nameEnd
+              }
+            });
+          }
 
-        // Forbidden
-        const isAttrForbidden = (options.forbiddenAttributes || []).some(a => a.toLowerCase() === attrNameLower);
-        if (isAttrForbidden) {
-          const { message, advice } = getMessage.attributeForbidden(lang, attrName, name);
-          errors.push({
-            type: 'ALLOWED_ATTRIBUTES',
-            message,
-            advice,
-            location: {
-              start: attr.start,
-              end: attr.end
-            }
-          });
-        } else {
-          // Deprecated
-          const isDeprecatedAttr = DEPRECATED_ATTRIBUTES.has(attrNameLower);
-          if (isDeprecatedAttr && options.allowDeprecatedAttributes === false) {
-            const { message, advice } = getMessage.attributeDeprecated(lang, attrName);
+          // Forbidden
+          const isAttrForbidden = (options.forbiddenAttributes || []).some(a => a.toLowerCase() === attrNameLower);
+          if (isAttrForbidden) {
+            const { message, advice } = getMessage.attributeForbidden(lang, attrName, name);
             errors.push({
               type: 'ALLOWED_ATTRIBUTES',
               message,
@@ -495,13 +490,10 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
               }
             });
           } else {
-            // Custom
-            const isGlobalStd = GLOBAL_STANDARD_ATTRIBUTES.has(attrNameLower);
-            const isTagSpecificStd = ELEMENT_STANDARD_ATTRIBUTES[tagLower]?.includes(attrNameLower) ?? false;
-            const isDataAttr = attrNameLower.startsWith('data-');
-
-            if (!isGlobalStd && !isTagSpecificStd && !isDataAttr && !isDeprecatedAttr && options.allowCustomAttributes === false) {
-              const { message, advice } = getMessage.attributeCustomNotAllowed(lang, attrName, name, attrNameLower);
+            // Deprecated
+            const isDeprecatedAttr = DEPRECATED_ATTRIBUTES.has(attrNameLower);
+            if (isDeprecatedAttr && options.allowDeprecatedAttributes === false) {
+              const { message, advice } = getMessage.attributeDeprecated(lang, attrName);
               errors.push({
                 type: 'ALLOWED_ATTRIBUTES',
                 message,
@@ -511,45 +503,66 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
                   end: attr.end
                 }
               });
+            } else {
+              // Custom
+              const isGlobalStd = GLOBAL_STANDARD_ATTRIBUTES.has(attrNameLower);
+              const isTagSpecificStd = ELEMENT_STANDARD_ATTRIBUTES[tagLower]?.includes(attrNameLower) ?? false;
+              const isDataAttr = attrNameLower.startsWith('data-');
+
+              if (!isGlobalStd && !isTagSpecificStd && !isDataAttr && !isDeprecatedAttr && options.allowCustomAttributes === false) {
+                const { message, advice } = getMessage.attributeCustomNotAllowed(lang, attrName, name, attrNameLower);
+                errors.push({
+                  type: 'ALLOWED_ATTRIBUTES',
+                  message,
+                  advice,
+                  location: {
+                    start: attr.start,
+                    end: attr.end
+                  }
+                });
+              }
             }
           }
         }
-      }
 
-      // Required Attributes
-      if (options.forceRequiredAttributes) {
-        const reqs = REQUIRED_ATTRIBUTES[tagLower];
-        if (reqs) {
-          for (const req of reqs) {
-            const hasReq = tagAttrs.some(a => a.name.toLowerCase() === req);
-            if (!hasReq) {
-              const isImgAlt = tagLower === 'img' && req === 'alt';
-              const { message, advice } = isImgAlt
-                ? getMessage.attributeImgAltRequired(lang)
-                : getMessage.attributeRequired(lang, req, name);
-              errors.push({
-                type: 'MISSING_REQUIRED_ATTRIBUTE',
-                message,
-                advice,
-                location: {
-                  start: token.start,
-                  end: token.end
-                }
-              });
+        // Required Attributes
+        if (options.forceRequiredAttributes) {
+          const reqs = REQUIRED_ATTRIBUTES[tagLower];
+          if (reqs) {
+            for (const req of reqs) {
+              const hasReq = tagAttrs.some(a => a.name.toLowerCase() === req);
+              if (!hasReq) {
+                const isImgAlt = tagLower === 'img' && req === 'alt';
+                const { message, advice } = isImgAlt
+                  ? getMessage.attributeImgAltRequired(lang)
+                  : getMessage.attributeRequired(lang, req, name);
+                errors.push({
+                  type: 'MISSING_REQUIRED_ATTRIBUTE',
+                  message,
+                  advice,
+                  location: {
+                    start: token.start,
+                    end: token.end
+                  }
+                });
+              }
             }
           }
         }
       }
 
       // Push to stack
-      if (!isVoid && !token.isSelfClosing) {
+      const effectiveVoid = insideSvg ? false : VOID_TAGS.has(tagLower);
+      if (!effectiveVoid && !token.isSelfClosing) {
         stack.push({ name, token });
       }
 
     } else if (token.type === 'TAG_CLOSE') {
       const name = token.name;
       const tagLower = name.toLowerCase();
-      const isVoid = VOID_TAGS.has(tagLower);
+      const insideSvg = stack.some(x => x.name.toLowerCase() === 'svg');
+      const isSvgTag = tagLower === 'svg';
+      const effectiveVoid = insideSvg ? false : VOID_TAGS.has(tagLower);
 
       if (options.checkFullStructure) {
         if (tagLower === 'html') htmlCloseCount++;
@@ -557,7 +570,7 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
         else if (tagLower === 'body') bodyCloseCount++;
       }
 
-      if (isVoid) {
+      if (effectiveVoid) {
         const { message, advice } = getMessage.voidElementCannotClose(lang, name);
         errors.push({
           type: 'INVALID_CLOSING_TAG',
@@ -572,43 +585,45 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
       }
 
       // Casing on closing
-      const isAllLower = name === name.toLowerCase();
-      const isAllUpper = name === name.toUpperCase();
-      const isMixed = !isAllLower && !isAllUpper;
+      if (!insideSvg || isSvgTag) {
+        const isAllLower = name === name.toLowerCase();
+        const isAllUpper = name === name.toUpperCase();
+        const isMixed = !isAllLower && !isAllUpper;
 
-      if (isAllLower && options.allowLowercaseTags === false) {
-        const { message, advice } = getMessage.closingTagCaseLowercaseForbidden(lang, name);
-        errors.push({
-          type: 'CASE',
-          message,
-          advice,
-          location: {
-            start: token.start,
-            end: token.end
-          }
-        });
-      } else if (isAllUpper && options.allowUppercaseTags === false) {
-        const { message, advice } = getMessage.closingTagCaseUppercaseForbidden(lang, name);
-        errors.push({
-          type: 'CASE',
-          message,
-          advice,
-          location: {
-            start: token.start,
-            end: token.end
-          }
-        });
-      } else if (isMixed && options.allowMixedcaseTags === false) {
-        const { message, advice } = getMessage.closingTagCaseMixedForbidden(lang, name);
-        errors.push({
-          type: 'CASE',
-          message,
-          advice,
-          location: {
-            start: token.start,
-            end: token.end
-          }
-        });
+        if (isAllLower && options.allowLowercaseTags === false) {
+          const { message, advice } = getMessage.closingTagCaseLowercaseForbidden(lang, name);
+          errors.push({
+            type: 'CASE',
+            message,
+            advice,
+            location: {
+              start: token.start,
+              end: token.end
+            }
+          });
+        } else if (isAllUpper && options.allowUppercaseTags === false) {
+          const { message, advice } = getMessage.closingTagCaseUppercaseForbidden(lang, name);
+          errors.push({
+            type: 'CASE',
+            message,
+            advice,
+            location: {
+              start: token.start,
+              end: token.end
+            }
+          });
+        } else if (isMixed && options.allowMixedcaseTags === false) {
+          const { message, advice } = getMessage.closingTagCaseMixedForbidden(lang, name);
+          errors.push({
+            type: 'CASE',
+            message,
+            advice,
+            location: {
+              start: token.start,
+              end: token.end
+            }
+          });
+        }
       }
 
       // Stack match check
@@ -669,8 +684,9 @@ export function checkHtml(tokens: Token[], userOptions: CheckerOptions = {}, lan
         const insideHtml = stack.some(x => x.name.toLowerCase() === 'html');
         const insideHead = stack.some(x => x.name.toLowerCase() === 'head');
         const insideBody = stack.some(x => x.name.toLowerCase() === 'body');
+        const insideSvg = stack.some(x => x.name.toLowerCase() === 'svg');
 
-        if (options.checkFullStructure) {
+        if (options.checkFullStructure && !insideSvg) {
           if (!insideHtml) {
             const hasNoTagsInStack = stack.length === 0;
             if (hasNoTagsInStack) {
