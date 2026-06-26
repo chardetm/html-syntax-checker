@@ -270,7 +270,9 @@ describe('CSS Syntax Checker', () => {
       const errors = checkCssSyntax(code);
       expect(errors).toHaveLength(1);
       expect(errors[0].type).toBe('CSS_PARSE_ERROR');
-      expect(errors[0].message).toContain('Missing semicolon');
+      expect(errors[0].message).toContain('Missing semicolon ";" at the end of declaration for property "color"');
+      expect(errors[0].location?.start).toEqual({ line: 1, column: 5 });
+      expect(errors[0].location?.end).toEqual({ line: 1, column: 14 });
     });
 
     it('detects missing semicolon between properties on separate lines', () => {
@@ -283,7 +285,9 @@ describe('CSS Syntax Checker', () => {
       const errors = checkCssSyntax(code);
       expect(errors).toHaveLength(1);
       expect(errors[0].type).toBe('CSS_PARSE_ERROR');
-      expect(errors[0].message).toContain('Missing semicolon');
+      expect(errors[0].message).toContain('Missing semicolon ";" at the end of declaration for property "color"');
+      expect(errors[0].location?.start).toEqual({ line: 3, column: 11 });
+      expect(errors[0].location?.end).toEqual({ line: 3, column: 20 });
     });
 
     it('does not flag single property per line by default', () => {

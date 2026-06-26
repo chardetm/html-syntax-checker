@@ -582,14 +582,18 @@ class CSSParser {
           const propNameStart = backtrackIdx + 1;
 
           if (propNameStart > valStart && propNameEnd >= propNameStart) {
-            const { message, advice } = getCssMessage.missingSemicolon(this.lang);
+            let valueEndIdx = propNameStart - 1;
+            while (valueEndIdx > valStart && /\s/.test(this.code[valueEndIdx])) {
+              valueEndIdx--;
+            }
+            const { message, advice } = getCssMessage.missingSemicolon(this.lang, propertyName);
             this.errors.push({
               type: 'CSS_PARSE_ERROR',
               message,
               advice,
               location: {
-                start: this.getPos(propNameStart - 1),
-                end: this.getPos(propNameStart - 1)
+                start: this.getPos(propStart),
+                end: this.getPos(valueEndIdx)
               }
             });
             this.index = propNameStart;

@@ -1527,8 +1527,9 @@ describe("HTML Syntax Checker", () => {
         const errors = checkHtmlSyntax(html, { cssOptions: {} });
         expect(errors.filter(e => e.type === "CSS_PARSE_ERROR")).toHaveLength(1);
         const err = errors.find(e => e.type === "CSS_PARSE_ERROR")!;
-        expect(err.message).toContain("Missing semicolon");
-        expect(err.location?.start.line).toBe(7);
+        expect(err.message).toContain('Missing semicolon ";" at the end of declaration for property "color"');
+        expect(err.location?.start).toEqual({ line: 6, column: 7 });
+        expect(err.location?.end).toEqual({ line: 6, column: 16 });
       });
 
       it("respects allowMultiplePropertiesPerLine option inside HTML style blocks", () => {

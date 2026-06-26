@@ -356,10 +356,10 @@ export const getCssMessage = {
       : 'Keyframe selectors must be "from", "to", or a percentage (e.g., "50%").'
   }),
 
-  missingSemicolon: (lang: Language) => ({
+  missingSemicolon: (lang: Language, prop: string) => ({
     message: lang === 'fr'
-      ? 'Point-virgule «\u00A0;\u00A0» manquant.'
-      : 'Missing semicolon ";".',
+      ? `Point-virgule «\u00A0;\u00A0» manquant à la fin de la déclaration de la propriété «\u00A0${prop}\u00A0».`
+      : `Missing semicolon ";" at the end of declaration for property "${prop}".`,
     advice: lang === 'fr'
       ? 'Ajoutez un point-virgule «\u00A0;\u00A0» à la fin de la déclaration.'
       : 'Add a semicolon ";" at the end of the declaration.'
