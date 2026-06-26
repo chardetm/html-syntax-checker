@@ -41,6 +41,15 @@ export const getCssMessage = {
       : 'Add "*/" to close the comment.'
   }),
 
+  unclosedBlock: (lang: Language) => ({
+    message: lang === 'fr'
+      ? 'Bloc « { » non fermé par une accolade « } ».'
+      : 'Block "{" is not closed by a brace "}".',
+    advice: lang === 'fr'
+      ? 'Ajoutez une accolade fermante « } » pour fermer le bloc.'
+      : 'Add a closing brace "}" to close the block.'
+  }),
+
   missingSelector: (lang: Language) => ({
     message: lang === 'fr'
       ? 'Sélecteur manquant avant le bloc «\u00A0{\u00A0».'

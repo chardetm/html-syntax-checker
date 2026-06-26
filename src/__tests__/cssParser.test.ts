@@ -37,6 +37,8 @@ describe('CSS Syntax Checker', () => {
       const errors = checkCssSyntax(code);
       expect(errors).toHaveLength(1);
       expect(errors[0].type).toBe('CSS_PARSE_ERROR');
+      expect(errors[0].location?.start).toEqual({ line: 1, column: 4 });
+      expect(errors[0].location?.end).toEqual({ line: 1, column: 4 });
     });
   });
 

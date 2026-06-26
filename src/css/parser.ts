@@ -238,6 +238,7 @@ class CSSParser {
 
     let hasBlock = false;
     let closed = false;
+    let openBraceIdx = -1;
     while (this.index < this.code.length) {
       this.skipWhitespaceAndComments();
       if (this.index >= this.code.length) break;
@@ -247,6 +248,7 @@ class CSSParser {
         closed = true;
         break;
       } else if (char === '{') {
+        openBraceIdx = this.index;
         this.index++; // consume '{'
         hasBlock = true;
         closed = true;
@@ -283,7 +285,7 @@ class CSSParser {
 
     if (hasBlock) {
       const isKeyframes = atRuleName.toLowerCase() === 'keyframes';
-      const blockContent = this.parseBlock(true, isKeyframes);
+      const blockContent = this.parseBlock(openBraceIdx, true, isKeyframes);
       rule.declarations = blockContent.declarations;
       rule.nestedRules = blockContent.nestedRules;
       rule.end = this.getPos(this.index - 1);
@@ -356,7 +358,7 @@ class CSSParser {
     }
 
     const errorsBefore = this.errors.length;
-    const blockContent = this.parseBlock(true, insideKeyframes);
+    const blockContent = this.parseBlock(selectorEndIdx, true, insideKeyframes);
     rule.declarations = blockContent.declarations;
     rule.nestedRules = blockContent.nestedRules;
     rule.end = this.getPos(this.index - 1);
@@ -399,7 +401,7 @@ class CSSParser {
     return rule;
   }
 
-  private parseBlock(isNested: boolean, insideKeyframes: boolean): { declarations: CSSDeclaration[]; nestedRules: CSSRule[] } {
+  private parseBlock(openBraceIdx: number, isNested: boolean, insideKeyframes: boolean): { declarations: CSSDeclaration[]; nestedRules: CSSRule[] } {
     const declarations: CSSDeclaration[] = [];
     const nestedRules: CSSRule[] = [];
     let closed = false;
@@ -479,17 +481,14 @@ class CSSParser {
     }
 
     if (!closed) {
+      const { message, advice } = getCssMessage.unclosedBlock(this.lang);
       this.errors.push({
         type: 'CSS_PARSE_ERROR',
-        message: this.lang === 'fr'
-          ? 'Bloc « { » non fermé par une accolade « } ».'
-          : 'Block "{" is not closed by a brace "}".',
-        advice: this.lang === 'fr'
-          ? 'Ajoutez une accolade fermante « } » pour fermer le bloc.'
-          : 'Add a closing brace "}" to close the block.',
+        message,
+        advice,
         location: {
-          start: this.getPos(this.index - 1),
-          end: this.getPos(this.index - 1)
+          start: this.getPos(openBraceIdx),
+          end: this.getPos(openBraceIdx)
         }
       });
     }
