@@ -1,6 +1,6 @@
 {
   "name": "@chardetm/html-syntax-checker",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "HTML and CSS syntax checker with easy to understand feedback for beginners in English or French.",
   "main": "dist/index.js",
   "module": "dist/index.js",
