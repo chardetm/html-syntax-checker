@@ -900,17 +900,59 @@ export function checkHtml(tokens: Token[], userOptions: HTMLCheckerOptions = {},
           }
           stack.splice(matchIdx);
         } else {
-          const top = stack.pop()!;
-          const { message, advice } = getMessage.closingTagMismatchTopMismatch(lang, name, top.name, top.token.start.line);
-          errors.push({
-            type: 'CLOSING_TAG_MISMATCH',
-            message,
-            advice,
-            location: {
-              start: token.start,
-              end: token.end
+          const top = stack[stack.length - 1];
+          const topLower = top.name.toLowerCase();
+
+          // Count how many elements currently on the stack have the name topLower
+          let stackCount = 0;
+          for (const s of stack) {
+            if (s.name.toLowerCase() === topLower) {
+              stackCount++;
             }
-          });
+          }
+
+          // Scan the remaining tokens to check if the top tag is closed later
+          let count = stackCount;
+          let topClosedLater = false;
+          for (let j = i + 1; j < validTokens.length; j++) {
+            const t = validTokens[j];
+            if (t.type === 'TAG_OPEN' && t.name.toLowerCase() === topLower && !t.isSelfClosing) {
+              count++;
+            } else if (t.type === 'TAG_CLOSE' && t.name.toLowerCase() === topLower) {
+              count--;
+              if (count <= 0) {
+                topClosedLater = true;
+                break;
+              }
+            }
+          }
+
+          if (topClosedLater) {
+            // Keep stack intact (assume current closing tag is extra/orphan)
+            const { message, advice } = getMessage.closingTagMismatchNoOpen(lang, name);
+            errors.push({
+              type: 'INVALID_CLOSING_TAG',
+              message,
+              advice,
+              location: {
+                start: token.start,
+                end: token.end
+              }
+            });
+          } else {
+            // Pop the stack and report mismatch/typo
+            stack.pop();
+            const { message, advice } = getMessage.closingTagMismatchTopMismatch(lang, name, top.name, top.token.start.line);
+            errors.push({
+              type: 'CLOSING_TAG_MISMATCH',
+              message,
+              advice,
+              location: {
+                start: token.start,
+                end: token.end
+              }
+            });
+          }
         }
       }
 

@@ -1605,5 +1605,76 @@ describe("HTML Syntax Checker", () => {
       expect(errors).toHaveLength(0);
     });
   });
+
+  describe("Lookahead Heuristic Error Recovery", () => {
+    it("handles the user's specific case of a malformed opening tag with nested tags without causing cascading errors", () => {
+      const code = `<!DOCTYPE html>
+<html>
+<head>
+<title>Bonjour</title>
+</head>
+<body>
+<div Test
+<p>Premier paragraphe</p>
+</div>
+Test
+<p>Test</p>
+</body>
+</html>`;
+      const errors = checkHtmlSyntax(code, { checkFullStructure: true });
+      expect(errors).toHaveLength(2);
+      expect(errors[0].type).toBe("PARSE_ERROR");
+      expect(errors[0].message).toContain('Opening tag "<div" is not closed');
+      expect(errors[1].type).toBe("INVALID_CLOSING_TAG");
+      expect(errors[1].message).toContain("closing tag </div> has no matching opening tag");
+    });
+
+    it("identifies a typo when the top tag on the stack is not closed later in the stream", () => {
+      const code = `<body>
+  <div>
+    <p>Test</divv>
+  </div>
+</body>`;
+      const errors = checkHtmlSyntax(code);
+      const mismatchErr = errors.find(e => e.type === "CLOSING_TAG_MISMATCH");
+      expect(mismatchErr).toBeDefined();
+      expect(mismatchErr!.message).toContain("closing tag </divv> does not match the opening tag <p>");
+    });
+
+    it("handles multiple sibling tags of the same name correctly using lookahead counting", () => {
+      const code = `<body>
+  <div>
+    </section>
+  </div>
+  <div>
+    <p>other</p>
+  </div>
+</body>`;
+      const errors = checkHtmlSyntax(code);
+      const sectionErr = errors.find(e => e.message.includes("</section>"));
+      expect(sectionErr).toBeDefined();
+      expect(sectionErr!.type).toBe("INVALID_CLOSING_TAG");
+      expect(sectionErr!.message).toContain("closing tag </section> has no matching opening tag");
+
+      const mismatchErrors = errors.filter(e => e.type === "CLOSING_TAG_MISMATCH");
+      expect(mismatchErrors).toHaveLength(0);
+    });
+
+    it("correctly identifies a missing closing tag when a sibling of the same name exists later", () => {
+      const code = `<body>
+  <div>
+    </section>
+    <!-- missing </div> here! -->
+  <div>
+    other
+  </div>
+</body>`;
+      const errors = checkHtmlSyntax(code);
+      const mismatchErr = errors.find(e => e.type === "CLOSING_TAG_MISMATCH");
+      expect(mismatchErr).toBeDefined();
+      expect(mismatchErr!.message).toContain("closing tag </section> does not match the opening tag <div>");
+    });
+  });
 });
+
 
