@@ -7,7 +7,8 @@ import {
   GRID_PROPERTIES,
   SHARED_LAYOUT_PROPERTIES,
   COLOR_CONTAINING_PROPERTIES,
-  KNOWN_CSS_PROPERTIES
+  KNOWN_CSS_PROPERTIES,
+  COMMON_PROPERTY_VALIDATORS
 } from './cssData';
 
 const DEFAULT_CSS_OPTIONS: Required<CSSCheckerOptions> = {
@@ -802,6 +803,7 @@ class CSSParser {
     }
 
     // Presence of units for non-zero values
+    let hasMissingUnitError = false;
     if (PROPERTIES_REQUIRING_UNITS.has(propLower)) {
       let terms = splitValueIntoTerms(decl.value);
       if (propLower === 'font') {
@@ -820,6 +822,7 @@ class CSSParser {
       for (const term of terms) {
         if (/^[+-]?(?:\d+(?:\.\d+)?|\.\d+)$/.test(term)) {
           if (parseFloat(term) !== 0) {
+            hasMissingUnitError = true;
             const { message, advice } = getCssMessage.missingUnit(this.lang, term, decl.property);
             this.errors.push({
               type: 'CSS_VALUE_VIOLATION',
@@ -902,6 +905,33 @@ class CSSParser {
               });
             }
           }
+        }
+      }
+    }
+
+    // Value validation checks (skip for variables / dynamic math)
+    const valTrim = decl.value.trim();
+    const hasDynamic = /\b(?:var|calc|min|max|clamp)\(/i.test(valTrim);
+    if (!hasDynamic && !hasMissingUnitError) {
+      const validator = COMMON_PROPERTY_VALIDATORS[propLower];
+      if (validator) {
+        const res = validator.validate(valTrim, this.lang);
+        if (!res.valid) {
+          let details = '';
+          if (res.reason) {
+            details = res.reason;
+          } else if (res.expected) {
+            details = this.lang === 'fr'
+              ? `Attendu\u00A0: ${res.expected}.`
+              : `Expected: ${res.expected}.`;
+          }
+          const { message, advice } = getCssMessage.invalidPropertyValue(this.lang, decl.value, decl.property, details);
+          this.errors.push({
+            type: 'CSS_VALUE_VIOLATION',
+            message,
+            advice,
+            location: { start: decl.valueStart, end: decl.valueEnd }
+          });
         }
       }
     }

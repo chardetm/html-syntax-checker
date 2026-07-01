@@ -390,5 +390,12 @@ export const getCssMessage = {
     advice: lang === 'fr'
       ? 'Vérifiez l’orthographe du nom de la propriété ou assurez-vous qu’elle est valide en CSS.'
       : 'Verify the spelling of the property name or ensure it is a valid CSS property.'
+  }),
+
+  invalidPropertyValue: (lang: Language, value: string, prop: string, details: string) => ({
+    message: lang === 'fr'
+      ? `Valeur «\u00A0${value}\u00A0» non valide pour la propriété «\u00A0${prop}\u00A0».`
+      : `Invalid value "${value}" for property "${prop}".`,
+    advice: details
   })
 };

@@ -420,4 +420,155 @@ describe('CSS Syntax Checker', () => {
       expect(errors[0].message).toContain('Property "float" is forbidden');
     });
   });
+
+  describe('CSS Property Value Validation', () => {
+    it('flags invalid value assignments for common properties', () => {
+      const invalidCodes = [
+        'h1 { width: red; }',
+        'h1 { color: 10px; }',
+        'h1 { position: block; }',
+        'h1 { display: relative; }',
+        'h1 { padding: auto; }',
+        'h1 { z-index: 1.5; }',
+        'h1 { flex-grow: -1; }',
+        'h1 { order: 1.2; }',
+        'h1 { opacity: abc; }'
+      ];
+      for (const code of invalidCodes) {
+        const errors = checkCssSyntax(code);
+        expect(errors.filter(e => e.type === 'CSS_VALUE_VIOLATION')).toHaveLength(1);
+        expect(errors[0].message).toContain('Invalid value');
+      }
+    });
+
+    it('allows valid value assignments for common properties', () => {
+      const validCodes = [
+        'h1 { width: 100px; }',
+        'h1 { width: 50%; }',
+        'h1 { width: auto; }',
+        'h1 { width: 0; }',
+        'h1 { color: #f00; }',
+        'h1 { color: rgb(255 0 0); }',
+        'h1 { position: absolute; }',
+        'h1 { display: flex; }',
+        'h1 { padding: 10px 20px; }',
+        'h1 { z-index: 99; }',
+        'h1 { flex-grow: 2; }',
+        'h1 { opacity: 0.8; }'
+      ];
+      for (const code of validCodes) {
+        const errors = checkCssSyntax(code);
+        expect(errors.filter(e => e.type === 'CSS_VALUE_VIOLATION')).toHaveLength(0);
+      }
+    });
+
+    it('skips validation for CSS variables and mathematical functions', () => {
+      const codes = [
+        'h1 { width: var(--my-width); }',
+        'h1 { width: calc(100% - 10px); }',
+        'h1 { color: var(--theme-color); }',
+        'h1 { color: calc(var(--x) * 2); }',
+        'h1 { margin: clamp(1rem, 2vw, 3rem); }'
+      ];
+      for (const code of codes) {
+        const errors = checkCssSyntax(code);
+        expect(errors.filter(e => e.type === 'CSS_VALUE_VIOLATION')).toHaveLength(0);
+      }
+    });
+
+    it('performs comprehensive validation for colors and reports sequential errors', () => {
+      const validColors = [
+        '#f00', '#ff0000', '#f00f', '#ff0000ff',
+        'rgb(255, 99, 71)', 'rgba(255, 99, 71, 0.5)',
+        'rgb(255 99 71)', 'rgb(255 99 71 / 0.5)', 'rgba(255 99 71 / 50%)',
+        'hsl(120, 100%, 50%)', 'hsla(120, 100%, 50%, 0.3)',
+        'hsl(120deg 100% 50% / 0.3)', 'hsl(none none none)',
+        'hwb(120 10% 20% / 0.5)', 'lab(50% 40 30)', 'lch(50% 40 120deg)',
+        'oklab(0.5 0.1 -0.1)', 'oklch(0.5 0.1 120 / 0.5)',
+        'color(display-p3 1 0.5 0)', 'color-mix(in srgb, red 30%, blue)',
+        'light-dark(white, black)'
+      ];
+      for (const color of validColors) {
+        const errors = checkCssSyntax(`h1 { color: ${color}; }`);
+        expect(errors).toHaveLength(0);
+      }
+
+      const testCases = [
+        { color: '#f00g', reason: 'characters' },
+        { color: '#f0', reason: 'digits' },
+        { color: 'rgb(255, 0 0)', reason: 'mix' },
+        { color: 'rgb(255 0 0 0.5)', reason: 'slash' },
+        { color: 'rgb(255, 0, 0 / 0.5)', reason: 'slash' },
+        { color: 'rgb(255, 0)', reason: 'arguments' },
+        { color: 'hsl(120, 100, 50%)', reason: 'percentage' },
+        { color: 'hwb(120, 10%, 20%)', reason: 'comma' },
+        { color: 'color-mix(in srgb, red, blue, green)', reason: 'arguments' },
+        { color: 'color-mix(in invalid-space, red, blue)', reason: 'space' },
+        { color: 'light-dark(white)', reason: 'arguments' }
+      ];
+      for (const tc of testCases) {
+        const errors = checkCssSyntax(`h1 { color: ${tc.color}; }`);
+        expect(errors.filter(e => e.type === 'CSS_VALUE_VIOLATION')).toHaveLength(1);
+        expect(errors[0].message).toContain('Invalid value');
+        expect((errors[0].advice || "").toLowerCase()).toContain(tc.reason.toLowerCase());
+      }
+    });
+
+    it('validates common shorthand properties (border, outline, background)', () => {
+      const validShorthands = [
+        'h1 { border: 1px solid red; }',
+        'h1 { border: solid; }',
+        'h1 { border: 2px #fff; }',
+        'h1 { outline: thick dashed currentColor; }',
+        'h1 { background: red; }',
+        'h1 { background: url(bg.png) no-repeat center / cover; }',
+        'h1 { background: url("bg.png") repeat-y padding-box border-box; }',
+        'h1 { background: linear-gradient(red, blue) no-repeat center; }'
+      ];
+      for (const code of validShorthands) {
+        const errors = checkCssSyntax(code);
+        expect(errors.filter(e => e.type === 'CSS_VALUE_VIOLATION')).toHaveLength(0);
+      }
+
+      const invalidShorthands = [
+        { code: 'h1 { border: red green; }', reason: 'multiple color' },
+        { code: 'h1 { border: 1px solid solid; }', reason: 'multiple style' },
+        { code: 'h1 { border: 1px solid invalidColor; }', reason: 'unknown' },
+        { code: 'h1 { outline: solid red blue; }', reason: 'multiple color' },
+        { code: 'h1 { background: solid red; }', reason: 'unknown' },
+        { code: 'h1 { background: red blue; }', reason: 'only' }
+      ];
+      for (const tc of invalidShorthands) {
+        const errors = checkCssSyntax(tc.code);
+        expect(errors.filter(e => e.type === 'CSS_VALUE_VIOLATION')).toHaveLength(1);
+        expect(errors[0].message).toContain('Invalid value');
+        expect((errors[0].advice || "").toLowerCase()).toContain(tc.reason.toLowerCase());
+      }
+    });
+
+    it('plays nice with other options (allowFlexbox, allowedColorFormats, allowedUnits)', () => {
+      const flexCode = 'div { display: flex; }';
+      const flexErrors = checkCssSyntax(flexCode, { allowFlexbox: false });
+      expect(flexErrors.filter(e => e.type === 'CSS_VALUE_VIOLATION')).toHaveLength(1);
+      expect(flexErrors[0].message).toContain('Flexbox value');
+
+      const rgbCode = 'div { color: rgb(255 0 0); }';
+      const rgbErrors = checkCssSyntax(rgbCode, { allowedColorFormats: ['hex'] });
+      expect(rgbErrors.filter(e => e.type === 'CSS_VALUE_VIOLATION')).toHaveLength(1);
+      expect(rgbErrors[0].message).toContain('Color format "rgb" is not allowed');
+
+      const remCode = 'div { width: 10rem; }';
+      const remErrors = checkCssSyntax(remCode, { allowedUnits: ['px'] });
+      expect(remErrors.filter(e => e.type === 'CSS_VALUE_VIOLATION')).toHaveLength(1);
+      expect(remErrors[0].message).toContain('Unit "rem" is not allowed');
+    });
+
+    it('handles French translations for values and advices', () => {
+      const code = 'h1 { width: red; }';
+      const errors = checkCssSyntax(code, {}, 'fr');
+      expect(errors).toHaveLength(1);
+      expect(errors[0].message).toContain('Valeur « red » non valide pour la propriété « width »');
+      expect(errors[0].advice).toContain('Attendu');
+    });
+  });
 });
