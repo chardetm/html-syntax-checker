@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HTML & CSS Syntax Checker - Manual Test Playground</title>
+  <meta name="description" content="A premium playground for testing HTML and CSS syntax checking options, error messages, and compliance rules in real-time.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="dark-theme">
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-logo">
+        <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        </svg>
+        <div class="logo-text">
+          <h1>Syntax Checker</h1>
+          <span class="logo-subtitle">Playground & Manual Test Suite</span>
+        </div>
+      </div>
+      
+      <div class="header-actions">
+        <!-- Language selector -->
+        <div class="lang-selector">
+          <label for="lang-select">Language:</label>
+          <select id="lang-select" class="custom-select">
+            <option value="en" selected>English (EN)</option>
+            <option value="fr">Français (FR)</option>
+          </select>
+        </div>
+        
+        <!-- Mode selection tabs -->
+        <div class="mode-tabs">
+          <button id="mode-btn-html" class="tab-btn active" data-mode="html">
+            <span class="tab-icon">HTML</span>
+          </button>
+          <button id="mode-btn-css" class="tab-btn" data-mode="css">
+            <span class="tab-icon">CSS</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="workspace">
+      <!-- Left Panel: Input & Settings -->
+      <section class="workspace-pane pane-input">
+        
+        <!-- Code Input Card -->
+        <div class="card card-editor">
+          <div class="card-header">
+            <h2 class="card-title">Code Input</h2>
+            <div class="editor-header-actions">
+              <button id="clear-btn" class="secondary-btn btn-sm">Clear</button>
+              <label for="file-upload" class="primary-btn btn-sm file-upload-label">
+                Upload File
+                <input type="file" id="file-upload" accept=".html,.css,.txt" class="hidden-file-input">
+              </label>
+            </div>
+          </div>
+          
+          <div class="card-body editor-container">
+            <!-- File Drop Area -->
+            <div id="drop-zone" class="drop-zone">
+              <svg class="drop-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+              </svg>
+              <p class="drop-text">Drag & drop a file here, or click upload</p>
+            </div>
+            
+            <textarea id="code-textarea" class="code-textarea" placeholder="Paste your HTML code here to check for syntax errors..." spellcheck="false"></textarea>
+          </div>
+        </div>
+
+        <!-- HTML Settings Panel -->
+        <div id="html-settings" class="settings-panel">
+          <h2 class="section-title">HTML Checker Options</h2>
+          
+          <!-- Tags & Customization -->
+          <div class="accordion-item expanded">
+            <div class="accordion-header">
+              <h3>Tags & Customization</h3>
+            </div>
+            <div class="accordion-content">
+              <div class="form-group-row">
+                <div class="form-group text-field">
+                  <label for="html-allowed-tags" title="Comma-separated list of tags allowed. Mutually exclusive with Forbidden Tags.">Allowed Tags</label>
+                  <input type="text" id="html-allowed-tags" class="custom-input" placeholder="e.g. p, span, div, a">
+                </div>
+                <div class="form-group text-field">
+                  <label for="html-forbidden-tags" title="Comma-separated list of tags to forbid. Mutually exclusive with Allowed Tags.">Forbidden Tags</label>
+                  <input type="text" id="html-forbidden-tags" class="custom-input" placeholder="e.g. iframe, script, style">
+                </div>
+              </div>
+              
+              <div class="form-group-row">
+                <div class="form-group select-field">
+                  <label for="html-xhtml-closing">XHTML Self Closing</label>
+                  <select id="html-xhtml-closing" class="custom-select">
+                    <option value="allowed" selected>Allowed (&lt;img /&gt; or &lt;img&gt;)</option>
+                    <option value="forced">Forced (&lt;img /&gt; required)</option>
+                    <option value="forbidden">Forbidden (&lt;img&gt; required)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="toggles-grid">
+                <label class="toggle-switch">
+                  <input type="checkbox" id="html-allow-deprecated" checked>
+                  <span class="slider"></span>
+                  <span class="toggle-label">Allow Deprecated Tags</span>
+                </label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="html-allow-custom">
+                  <span class="slider"></span>
+                  <span class="toggle-label">Allow Custom Tags</span>
+                </label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="html-tag-lowercase" checked>
+                  <span class="slider"></span>
+                  <span class="toggle-label">Allow Lowercase Tags</span>
+                </label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="html-tag-uppercase" checked>
+                  <span class="slider"></span>
+                  <span class="toggle-label">Allow Uppercase Tags</span>
+                </label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="html-tag-mixedcase">
+                  <span class="slider"></span>
+                  <span class="toggle-label">Allow Mixed-case Tags</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Attributes Customization -->
+          <div class="accordion-item expanded">
+            <div class="accordion-header">
+              <h3>Attributes Customization</h3>
+            </div>
+            <div class="accordion-content">
+              <div class="form-group text-field">
+                <label for="html-forbidden-attrs" title="Comma-separated list of forbidden attributes.">Forbidden Attributes</label>
+                <input type="text" id="html-forbidden-attrs" class="custom-input" placeholder="e.g. onclick, onmouseover">
+              </div>
+
+              <div class="toggles-grid">
+                <label class="toggle-switch">
+                  <input type="checkbox" id="html-force-required" checked>
+                  <span class="slider"></span>
+                  <span class="toggle-label">Force Required Attributes</span>
+                </label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="html-attr-deprecated" checked>
+                  <span class="slider"></span>
+                  <span class="toggle-label">Allow Deprecated Attributes</span>
+                </label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="html-attr-custom">
+                  <span class="slider"></span>
+                  <span class="toggle-label">Allow Custom Attributes</span>
+                </label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="html-attr-lowercase" checked>
+                  <span class="slider"></span>
+                  <span class="toggle-label">Allow Lowercase Attributes</span>
+                </label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="html-attr-uppercase" checked>
+                  <span class="slider"></span>
+                  <span class="toggle-label">Allow Uppercase Attributes</span>
+                </label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="html-attr-mixedcase">
+                  <span class="slider"></span>
+                  <span class="toggle-label">Allow Mixed-case Attributes</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Structure & Accessibility -->
+          <div class="accordion-item expanded">
+            <div class="accordion-header">
+              <h3>Structure & Accessibility</h3>
+            </div>
+            <div class="accordion-content">
+              <div class="toggles-grid">
+                <label class="toggle-switch">
+                  <input type="checkbox" id="html-check-structure">
+                  <span class="slider"></span>
+                  <span class="toggle-label">Check Full HTML Structure (&lt;html&gt;, &lt;body&gt;, ...)</span>
+                </label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="html-check-charset">
+                  <span class="slider"></span>
+                  <span class="toggle-label">Check &lt;meta charset&gt; presence</span>
+                </label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="html-check-title">
+                  <span class="slider"></span>
+                  <span class="toggle-label">Check &lt;title&gt; presence</span>
+                </label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="html-req-form-controls">
+                  <span class="slider"></span>
+                  <span class="toggle-label">Require form controls inside &lt;form&gt;</span>
+                </label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="html-req-labels">
+                  <span class="slider"></span>
+                  <span class="toggle-label">Require &lt;label&gt; for interactive controls</span>
+                </label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="html-radio-consistency">
+                  <span class="slider"></span>
+                  <span class="toggle-label">Require radio button name consistency</span>
+                </label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="html-button-type">
+                  <span class="slider"></span>
+                  <span class="toggle-label">Require explicit button type</span>
+                </label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="html-select-has-option">
+                  <span class="slider"></span>
+                  <span class="toggle-label">Require select has options</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Nested CSS Validation in HTML -->
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <h3>Nested CSS Rules (in HTML style attributes / tags)</h3>
+            </div>
+            <div class="accordion-content">
+              <p class="section-desc">Configure rules for style checking nested inside the HTML parser.</p>
+              <div id="html-css-options-container" class="nested-settings">
+                <!-- Inner CSS configuration options will mirror root CSS controls -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CSS Settings Panel (Hidden by default, shown when CSS tab active) -->
+        <div id="css-settings" class="settings-panel hidden">
+          <h2 class="section-title">CSS Checker Options</h2>
+
+          <!-- Selectors & Specificity -->
+          <div class="accordion-item expanded">
+            <div class="accordion-header">
+              <h3>Selectors & Specificity</h3>
+            </div>
+            <div class="accordion-content">
+              <div class="toggles-grid">
+                <label class="toggle-switch">
+                  <input type="checkbox" id="css-allow-type" checked>
+                  <span class="slider"></span>
+                  <span class="toggle-label">Allow Type Selectors (e.g. <code>h1</code>)</span>
+                </label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="css-allow-class" checked>
+                  <span class="slider"></span>
+                  <span class="toggle-label">Allow Class Selectors (e.g. <code>.card</code>)</span>
+                </label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="css-allow-id" checked>
+                  <span class="slider"></span>
+                  <span class="toggle-label">Allow ID Selectors (e.g. <code>#header</code>)</span>
+                </label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="css-allow-universal" checked>
+                  <span class="slider"></span>
+                  <span class="toggle-label">Allow Universal Selector (<code>*</code>)</span>
+                </label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="css-allow-lists" checked>
+                  <span class="slider"></span>
+                  <span class="toggle-label">Allow Selector Lists (e.g. <code>h1, p</code>)</span>
+                </label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="css-allow-combinators" checked>
+                  <span class="slider"></span>
+                  <span class="toggle-label">Allow Combinators (e.g. <code>div > p</code>)</span>
+                </label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="css-allow-nested" checked>
+                  <span class="slider"></span>
+                  <span class="toggle-label">Allow Nested Rules (using <code>&</code>)</span>
+                </label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="css-allow-atrules" checked>
+                  <span class="slider"></span>
+                  <span class="toggle-label">Allow At-Rules (e.g. <code>@media</code>)</span>
+                </label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="css-allow-pseudo-classes" checked>
+                  <span class="slider"></span>
+                  <span class="toggle-label">Allow Pseudo-Classes (e.g. <code>:hover</code>)</span>
+                </label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="css-allow-pseudo-elements" checked>
+                  <span class="slider"></span>
+                  <span class="toggle-label">Allow Pseudo-Elements (e.g. <code>::before</code>)</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Properties & Values -->
+          <div class="accordion-item expanded">
+            <div class="accordion-header">
+              <h3>Properties & Values Whitelisting</h3>
+            </div>
+            <div class="accordion-content">
+              <div class="form-group-row">
+                <div class="form-group text-field">
+                  <label for="css-allowed-properties" title="Comma-separated properties to restrict the student to.">Allowed Properties</label>
+                  <input type="text" id="css-allowed-properties" class="custom-input" placeholder="e.g. color, background, font-size">
+                </div>
+                <div class="form-group text-field">
+                  <label for="css-forbidden-properties" title="Comma-separated properties that are banned.">Forbidden Properties</label>
+                  <input type="text" id="css-forbidden-properties" class="custom-input" placeholder="e.g. float, position, z-index">
+                </div>
+              </div>
+              <div class="form-group-row">
+                <div class="form-group text-field">
+                  <label for="css-allowed-colors" title="Comma-separated color formats allowed (hex, rgb, rgba, hsl, hsla, named).">Allowed Color Formats</label>
+                  <input type="text" id="css-allowed-colors" class="custom-input" placeholder="e.g. hex, rgb, hsl">
+                </div>
+                <div class="form-group text-field">
+                  <label for="css-allowed-units" title="Comma-separated units allowed (px, em, rem, %, vh, vw, etc.).">Allowed Units</label>
+                  <input type="text" id="css-allowed-units" class="custom-input" placeholder="e.g. px, rem, %">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Layout, Formatting & Rules -->
+          <div class="accordion-item expanded">
+            <div class="accordion-header">
+              <h3>Layout & Formatting Rules</h3>
+            </div>
+            <div class="accordion-content">
+              <div class="toggles-grid">
+                <label class="toggle-switch">
+                  <input type="checkbox" id="css-allow-flexbox" checked>
+                  <span class="slider"></span>
+                  <span class="toggle-label">Allow Flexbox properties</span>
+                </label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="css-allow-grid" checked>
+                  <span class="slider"></span>
+                  <span class="toggle-label">Allow CSS Grid properties</span>
+                </label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="css-allow-important">
+                  <span class="slider"></span>
+                  <span class="toggle-label">Allow <code>!important</code></span>
+                </label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="css-prop-lowercase" checked>
+                  <span class="slider"></span>
+                  <span class="toggle-label">Allow Lowercase Properties</span>
+                </label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="css-prop-uppercase" checked>
+                  <span class="slider"></span>
+                  <span class="toggle-label">Allow Uppercase Properties</span>
+                </label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="css-prop-mixedcase">
+                  <span class="slider"></span>
+                  <span class="toggle-label">Allow Mixed-case Properties</span>
+                </label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="css-allow-empty">
+                  <span class="slider"></span>
+                  <span class="toggle-label">Allow Empty Rules (e.g. <code>h1 {}</code>)</span>
+                </label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="css-allow-duplicate">
+                  <span class="slider"></span>
+                  <span class="toggle-label">Allow Duplicate Properties inside a Block</span>
+                </label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="css-allow-multi-prop-line" checked>
+                  <span class="slider"></span>
+                  <span class="toggle-label">Allow Multiple Properties per Line</span>
+                </label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="css-allow-unrecognized">
+                  <span class="slider"></span>
+                  <span class="toggle-label">Allow Unrecognized/Non-standard Properties</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- Right Panel: Results & Reports -->
+      <section class="workspace-pane pane-results">
+        
+        <!-- Dashboard Summary Card -->
+        <div class="card card-summary">
+          <div class="card-header">
+            <h2 class="card-title">Validation Status</h2>
+          </div>
+          <div class="card-body summary-body">
+            <div id="status-panel" class="status-panel status-loading">
+              <div class="status-indicator"></div>
+              <div class="status-details">
+                <h3 id="status-heading">Awaiting Input</h3>
+                <p id="status-subheading">Paste code or upload a file to begin syntax validation.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Detailed Results Card -->
+        <div class="card card-results-details">
+          <div class="card-header">
+            <h2 class="card-title">Error Logs (<span id="error-count">0</span>)</h2>
+          </div>
+          <div class="card-body results-scroll-area">
+            <div id="no-errors-fallback" class="empty-state">
+              <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                <polyline points="22 4 12 14.01 9 11.01"/>
+              </svg>
+              <p>No syntax issues detected under active settings.</p>
+            </div>
+            
+            <div id="errors-list" class="errors-list hidden">
+              <!-- Dynamically populated with error cards -->
+            </div>
+          </div>
+        </div>
+
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="/main.ts"></script>
+</body>
+</html>
