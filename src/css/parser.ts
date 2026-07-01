@@ -6,7 +6,8 @@ import {
   FLEXBOX_PROPERTIES,
   GRID_PROPERTIES,
   SHARED_LAYOUT_PROPERTIES,
-  COLOR_CONTAINING_PROPERTIES
+  COLOR_CONTAINING_PROPERTIES,
+  KNOWN_CSS_PROPERTIES
 } from './cssData';
 
 const DEFAULT_CSS_OPTIONS: Required<CSSCheckerOptions> = {
@@ -32,7 +33,8 @@ const DEFAULT_CSS_OPTIONS: Required<CSSCheckerOptions> = {
   allowMixedcaseProperties: false,
   allowEmptyRules: false,
   allowDuplicateProperties: false,
-  allowMultiplePropertiesPerLine: true
+  allowMultiplePropertiesPerLine: true,
+  allowUnrecognizedProperties: false
 };
 
 interface CSSDeclaration {
@@ -701,9 +703,11 @@ class CSSParser {
     }
 
     // Whitelist / Blacklist property checks
+    let isAllowed = true;
     if (this.options.allowedProperties) {
       const allowedSet = new Set(this.options.allowedProperties.map(p => p.toLowerCase()));
       if (!allowedSet.has(propLower)) {
+        isAllowed = false;
         const { message, advice } = getCssMessage.propertyNotAllowed(this.lang, prop);
         this.errors.push({
           type: 'CSS_PROPERTY_VIOLATION',
@@ -716,7 +720,21 @@ class CSSParser {
     if (this.options.forbiddenProperties) {
       const forbiddenSet = new Set(this.options.forbiddenProperties.map(p => p.toLowerCase()));
       if (forbiddenSet.has(propLower)) {
+        isAllowed = false;
         const { message, advice } = getCssMessage.propertyForbidden(this.lang, prop);
+        this.errors.push({
+          type: 'CSS_PROPERTY_VIOLATION',
+          message,
+          advice,
+          location: { start: decl.propertyStart, end: decl.propertyEnd }
+        });
+      }
+    }
+
+    if (isAllowed && !this.options.allowUnrecognizedProperties) {
+      const isCustomProp = propLower.startsWith('--');
+      if (!isCustomProp && !KNOWN_CSS_PROPERTIES.has(propLower)) {
+        const { message, advice } = getCssMessage.unrecognizedProperty(this.lang, prop);
         this.errors.push({
           type: 'CSS_PROPERTY_VIOLATION',
           message,
@@ -890,6 +908,179 @@ class CSSParser {
   }
 
   private validateSelector(selectorStr: string, startIdx: number, endIdx: number, insideKeyframes: boolean, isNested: boolean) {
+    // Split the selectorStr by comma at the top level to validate list items
+    const parts: { str: string; start: number; end: number }[] = [];
+    let lastIdx = 0;
+    let pDepth = 0;
+    let bDepth = 0;
+    let q = '';
+
+    for (let idx = 0; idx < selectorStr.length; idx++) {
+      const char = selectorStr[idx];
+      if (q) {
+        if (char === q) {
+          q = '';
+        }
+      } else if (char === '"' || char === "'") {
+        q = char;
+      } else if (char === '[') {
+        bDepth++;
+      } else if (char === ']') {
+        if (bDepth > 0) bDepth--;
+      } else if (char === '(') {
+        pDepth++;
+      } else if (char === ')') {
+        if (pDepth > 0) pDepth--;
+      } else if (char === ',' && pDepth === 0 && bDepth === 0) {
+        parts.push({
+          str: selectorStr.slice(lastIdx, idx),
+          start: startIdx + lastIdx,
+          end: startIdx + idx - 1
+        });
+        lastIdx = idx + 1;
+      }
+    }
+    parts.push({
+      str: selectorStr.slice(lastIdx),
+      start: startIdx + lastIdx,
+      end: startIdx + selectorStr.length - 1
+    });
+
+    let hasInvalid = false;
+    if (q || pDepth > 0 || bDepth > 0) {
+      hasInvalid = true;
+    }
+
+    if (!hasInvalid) {
+      for (const part of parts) {
+        const trimmed = part.str.trim();
+        if (trimmed === '') {
+          hasInvalid = true;
+          break;
+        }
+
+        // Check starts/ends with combinator
+        if (/[>+~]$/.test(trimmed)) {
+          hasInvalid = true;
+          break;
+        }
+        if (!isNested && /^[>+~]/.test(trimmed)) {
+          hasInvalid = true;
+          break;
+        }
+
+        let i = 0;
+        let partValid = true;
+        while (i < trimmed.length) {
+          const char = trimmed[i];
+          if (char === '.' || char === '#' || char === ':') {
+            let checkIdx = i;
+            if (char === ':') {
+              if (trimmed[i + 1] === ':') {
+                checkIdx++;
+              }
+            }
+            const nextChar = trimmed[checkIdx + 1];
+            if (!nextChar || !/[a-zA-Z0-9_-]/.test(nextChar)) {
+              partValid = false;
+              break;
+            }
+            i = checkIdx + 1;
+          } else if (char === '[') {
+            let matchIdx = -1;
+            let tempBDepth = 1;
+            for (let j = i + 1; j < trimmed.length; j++) {
+              if (trimmed[j] === '[') tempBDepth++;
+              else if (trimmed[j] === ']') tempBDepth--;
+              if (tempBDepth === 0) {
+                matchIdx = j;
+                break;
+              }
+            }
+            if (matchIdx === -1) {
+              partValid = false;
+              break;
+            }
+            const content = trimmed.slice(i + 1, matchIdx).trim();
+            const attrRegex = /^(?:[a-zA-Z0-9_-]+\|)?[a-zA-Z0-9_-]+\s*(?:[~|^$*]?=\s*(?:"[^"]*"|'[^']*'|[^'"\]\s]+))?\s*(?:[iIsS])?$/;
+            if (!attrRegex.test(content)) {
+              partValid = false;
+              break;
+            }
+            i = matchIdx + 1;
+          } else if (char === '(') {
+            const beforeSub = trimmed.slice(0, i);
+            if (!/:[a-zA-Z0-9_-]+$/.test(beforeSub)) {
+              partValid = false;
+              break;
+            }
+            let matchIdx = -1;
+            let tempPDepth = 1;
+            for (let j = i + 1; j < trimmed.length; j++) {
+              if (trimmed[j] === '(') tempPDepth++;
+              else if (trimmed[j] === ')') tempPDepth--;
+              if (tempPDepth === 0) {
+                matchIdx = j;
+                break;
+              }
+            }
+            if (matchIdx === -1) {
+              partValid = false;
+              break;
+            }
+            const content = trimmed.slice(i + 1, matchIdx).trim();
+            if (content.length === 0) {
+              partValid = false;
+              break;
+            }
+            i = matchIdx + 1;
+          } else if (char === '>' || char === '+' || char === '~') {
+            let nextNonSpace = '';
+            for (let j = i + 1; j < trimmed.length; j++) {
+              if (!/\s/.test(trimmed[j])) {
+                nextNonSpace = trimmed[j];
+                break;
+              }
+            }
+            if (!nextNonSpace || /[>+~]/.test(nextNonSpace)) {
+              partValid = false;
+              break;
+            }
+            i++;
+          } else if (char === '*' || char === '&') {
+            i++;
+          } else if (/[a-zA-Z0-9_-]/.test(char)) {
+            i++;
+          } else if (/\s/.test(char)) {
+            i++;
+          } else {
+            if (char === '%') {
+              i++;
+            } else {
+              partValid = false;
+              break;
+            }
+          }
+        }
+
+        if (!partValid) {
+          hasInvalid = true;
+          break;
+        }
+      }
+    }
+
+    if (hasInvalid) {
+      const { message, advice } = getCssMessage.invalidSelector(this.lang, selectorStr);
+      this.errors.push({
+        type: 'CSS_PARSE_ERROR',
+        message,
+        advice,
+        location: { start: this.getPos(startIdx), end: this.getPos(endIdx) }
+      });
+      return;
+    }
+
     if (!insideKeyframes && /\b\d+(?:\.\d+)?%/.test(selectorStr)) {
       const { message, advice } = getCssMessage.invalidKeyframeSelector(this.lang, selectorStr);
       this.errors.push({

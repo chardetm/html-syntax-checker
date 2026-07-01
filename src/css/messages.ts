@@ -372,5 +372,23 @@ export const getCssMessage = {
     advice: lang === 'fr'
       ? 'Déplacez les propriétés supplémentaires vers de nouvelles lignes.'
       : 'Move additional properties to new lines.'
+  }),
+
+  invalidSelector: (lang: Language, selector: string) => ({
+    message: lang === 'fr'
+      ? `Sélecteur non valide «\u00A0${selector}\u00A0».`
+      : `Invalid selector "${selector}".`,
+    advice: lang === 'fr'
+      ? 'Vérifiez la syntaxe de votre sélecteur (ex\u00A0: parenthèses, crochets ou pseudo-classes mal fermés ou vides).'
+      : 'Verify the syntax of your selector (e.g. unclosed or empty parentheses, brackets, or pseudo-classes).'
+  }),
+
+  unrecognizedProperty: (lang: Language, prop: string) => ({
+    message: lang === 'fr'
+      ? `La propriété «\u00A0${prop}\u00A0» n'est pas reconnue.`
+      : `Property "${prop}" is unrecognized.`,
+    advice: lang === 'fr'
+      ? 'Vérifiez l’orthographe du nom de la propriété ou assurez-vous qu’elle est valide en CSS.'
+      : 'Verify the spelling of the property name or ensure it is a valid CSS property.'
   })
 };

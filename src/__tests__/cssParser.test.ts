@@ -325,4 +325,99 @@ describe('CSS Syntax Checker', () => {
       expect(errors2[0].message).toContain('Chaque propriété doit être sur sa propre ligne');
     });
   });
+
+  describe('Strict Selector Validation', () => {
+    it('flags invalid selector with double/dangling pseudo-elements/pseudo-classes', () => {
+      const code1 = 'body:: {\n  font-family: sans-serif;\n}';
+      const errors1 = checkCssSyntax(code1);
+      expect(errors1).toHaveLength(1);
+      expect(errors1[0].type).toBe('CSS_PARSE_ERROR');
+      expect(errors1[0].message).toContain('Invalid selector');
+
+      const code2 = 'body: {\n  font-family: sans-serif;\n}';
+      const errors2 = checkCssSyntax(code2);
+      expect(errors2).toHaveLength(1);
+      expect(errors2[0].type).toBe('CSS_PARSE_ERROR');
+      expect(errors2[0].message).toContain('Invalid selector');
+    });
+
+    it('flags invalid selector with dangling/unclosed brackets', () => {
+      const code = 'body[ {\n  font-family: sans-serif;\n}';
+      const errors = checkCssSyntax(code);
+      expect(errors).toHaveLength(1);
+      expect(errors[0].type).toBe('CSS_PARSE_ERROR');
+      expect(errors[0].message).toContain('Invalid selector');
+    });
+
+    it('flags invalid selector with empty pseudo-class parenthesis', () => {
+      const code = 'body:not() {\n  font-family: sans-serif;\n}';
+      const errors = checkCssSyntax(code);
+      expect(errors).toHaveLength(1);
+      expect(errors[0].type).toBe('CSS_PARSE_ERROR');
+    });
+
+    it('flags invalid selector with misplaced parenthesis', () => {
+      const code = 'body(div) {\n  font-family: sans-serif;\n}';
+      const errors = checkCssSyntax(code);
+      expect(errors).toHaveLength(1);
+      expect(errors[0].type).toBe('CSS_PARSE_ERROR');
+    });
+
+    it('flags invalid selector with double/consecutive combinators', () => {
+      const code = 'div > > p {\n  font-family: sans-serif;\n}';
+      const errors = checkCssSyntax(code);
+      expect(errors).toHaveLength(1);
+      expect(errors[0].type).toBe('CSS_PARSE_ERROR');
+    });
+
+    it('flags invalid selector with trailing combinator', () => {
+      const code = 'div > {\n  font-family: sans-serif;\n}';
+      const errors = checkCssSyntax(code);
+      expect(errors).toHaveLength(1);
+      expect(errors[0].type).toBe('CSS_PARSE_ERROR');
+    });
+
+    it('flags invalid selector with empty items in selector lists', () => {
+      const code = 'div,,span {\n  font-family: sans-serif;\n}';
+      const errors = checkCssSyntax(code);
+      expect(errors).toHaveLength(1);
+      expect(errors[0].type).toBe('CSS_PARSE_ERROR');
+    });
+  });
+
+  describe('Unrecognized Properties Option', () => {
+    it('flags unrecognized properties by default (allowUnrecognizedProperties: false)', () => {
+      const code = 'h1 { color-x: red; }';
+      const errors = checkCssSyntax(code);
+      expect(errors).toHaveLength(1);
+      expect(errors[0].type).toBe('CSS_PROPERTY_VIOLATION');
+      expect(errors[0].message).toContain('is unrecognized');
+    });
+
+    it('allows unrecognized properties when allowUnrecognizedProperties is true', () => {
+      const code = 'h1 { color-x: red; }';
+      const errors = checkCssSyntax(code, { allowUnrecognizedProperties: true });
+      expect(errors).toHaveLength(0);
+    });
+
+    it('always allows custom properties starting with --', () => {
+      const code = 'h1 { --primary-color: red; color: var(--primary-color); }';
+      const errors = checkCssSyntax(code);
+      expect(errors).toHaveLength(0);
+    });
+
+    it('respects allowedProperties whitelist', () => {
+      const code = 'h1 { color: red; margin: 10px; }';
+      const errors = checkCssSyntax(code, { allowedProperties: ['color'], allowUnrecognizedProperties: false });
+      expect(errors.filter(e => e.type === 'CSS_PROPERTY_VIOLATION')).toHaveLength(1);
+      expect(errors[0].message).toContain('Property "margin" is not allowed');
+    });
+
+    it('respects forbiddenProperties blacklist', () => {
+      const code = 'h1 { float: left; color: red; }';
+      const errors = checkCssSyntax(code, { forbiddenProperties: ['float'], allowUnrecognizedProperties: false });
+      expect(errors.filter(e => e.type === 'CSS_PROPERTY_VIOLATION')).toHaveLength(1);
+      expect(errors[0].message).toContain('Property "float" is forbidden');
+    });
+  });
 });
