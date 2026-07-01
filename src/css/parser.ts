@@ -319,6 +319,10 @@ class CSSParser {
       this.index++;
     }
 
+    if (!foundOpenBrace) {
+      selectorEndIdx = this.index;
+    }
+
     const selectorStr = this.code.slice(startIdx, selectorEndIdx).trim();
 
     if (!selectorStr && foundOpenBrace) {
@@ -348,16 +352,19 @@ class CSSParser {
     }
 
     if (!foundOpenBrace) {
-      const { message, advice } = getCssMessage.unclosedRule(this.lang, selectorStr);
-      this.errors.push({
-        type: 'CSS_PARSE_ERROR',
-        message,
-        advice,
-        location: {
-          start: this.getPos(startIdx),
-          end: this.getPos(this.index - 1)
-        }
-      });
+      const isHtmlTag = /<[a-zA-Z/!?]/.test(selectorStr);
+      if (!isHtmlTag) {
+        const { message, advice } = getCssMessage.unclosedRule(this.lang, selectorStr);
+        this.errors.push({
+          type: 'CSS_PARSE_ERROR',
+          message,
+          advice,
+          location: {
+            start: this.getPos(startIdx),
+            end: this.getPos(this.index - 1)
+          }
+        });
+      }
       return rule;
     }
 
@@ -991,8 +998,12 @@ class CSSParser {
 
         // Check starts/ends with combinator
         if (/[>+~]$/.test(trimmed)) {
-          hasInvalid = true;
-          break;
+          if (/<[a-zA-Z/!?]/.test(trimmed)) {
+            // Let it fall through to character loop to get the specific HTML tag error
+          } else {
+            hasInvalid = true;
+            break;
+          }
         }
         if (!isNested && /^[>+~]/.test(trimmed)) {
           hasInvalid = true;
@@ -1077,6 +1088,20 @@ class CSSParser {
               break;
             }
             i++;
+          } else if (char === '<') {
+            if (i + 1 < trimmed.length && /[a-zA-Z/!?]/.test(trimmed[i + 1])) {
+              const { message, advice } = getCssMessage.htmlTagAsSelector(this.lang, trimmed);
+              this.errors.push({
+                type: 'CSS_PARSE_ERROR',
+                message,
+                advice,
+                location: { start: this.getPos(part.start), end: this.getPos(part.end) }
+              });
+              return;
+            } else {
+              partValid = false;
+              break;
+            }
           } else if (char === '*' || char === '&') {
             i++;
           } else if (/[a-zA-Z0-9_-]/.test(char)) {

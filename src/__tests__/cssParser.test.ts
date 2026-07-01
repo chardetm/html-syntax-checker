@@ -571,4 +571,49 @@ describe('CSS Syntax Checker', () => {
       expect(errors[0].advice).toContain('Attendu');
     });
   });
+
+  describe('Unclosed Rules and HTML Tags in CSS', () => {
+    it('replaces ... with actual selector in unclosed rule error', () => {
+      const code = 'h1';
+      const errors = checkCssSyntax(code);
+      expect(errors).toHaveLength(1);
+      expect(errors[0].type).toBe('CSS_PARSE_ERROR');
+      expect(errors[0].message).toBe('Unclosed CSS rule or missing brace "{" for selector "h1".');
+      expect(errors[0].advice).toContain('Add an opening brace "{"');
+    });
+
+    it('handles French translation for unclosed rule error with actual selector', () => {
+      const code = 'h1';
+      const errors = checkCssSyntax(code, {}, 'fr');
+      expect(errors).toHaveLength(1);
+      expect(errors[0].type).toBe('CSS_PARSE_ERROR');
+      expect(errors[0].message).toContain('Règle CSS non fermée ou accolade « { » manquante pour le sélecteur « h1 »');
+    });
+
+    it('detects HTML tags as selectors and gives clear advice', () => {
+      const code1 = '<html>';
+      const errors1 = checkCssSyntax(code1);
+      expect(errors1).toHaveLength(1);
+      expect(errors1[0].type).toBe('CSS_PARSE_ERROR');
+      expect(errors1[0].message).toBe('HTML tags (like "<html>") cannot be used as selectors in CSS.');
+      expect(errors1[0].advice).toContain('write the tag name directly without "<" and ">"');
+      expect(errors1[0].advice).toContain('use "html" instead of "<html>"');
+
+      const code2 = '<html> { color: red; }';
+      const errors2 = checkCssSyntax(code2);
+      expect(errors2).toHaveLength(1);
+      expect(errors2[0].type).toBe('CSS_PARSE_ERROR');
+      expect(errors2[0].message).toBe('HTML tags (like "<html>") cannot be used as selectors in CSS.');
+    });
+
+    it('handles French translations for HTML tags in selectors', () => {
+      const code = '<html>';
+      const errors = checkCssSyntax(code, {}, 'fr');
+      expect(errors).toHaveLength(1);
+      expect(errors[0].type).toBe('CSS_PARSE_ERROR');
+      expect(errors[0].message).toContain('Les balises HTML (comme « <html> ») ne peuvent pas être utilisées comme sélecteurs en CSS.');
+      expect(errors[0].advice).toContain('écrivez le nom de la balise directement sans');
+      expect(errors[0].advice).toContain('utilisez « html » au lieu de « <html> »');
+    });
+  });
 });

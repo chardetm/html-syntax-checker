@@ -383,6 +383,15 @@ export const getCssMessage = {
       : 'Verify the syntax of your selector (e.g. unclosed or empty parentheses, brackets, or pseudo-classes).'
   }),
 
+  htmlTagAsSelector: (lang: Language, selector: string) => ({
+    message: lang === 'fr'
+      ? `Les balises HTML (comme «\u00A0${selector}\u00A0») ne peuvent pas être utilisées comme sélecteurs en CSS.`
+      : `HTML tags (like "${selector}") cannot be used as selectors in CSS.`,
+    advice: lang === 'fr'
+      ? 'En CSS, écrivez le nom de la balise directement sans «\u00A0<\u00A0» ni «\u00A0>\u00A0» (ex\u00A0: utilisez «\u00A0html\u00A0» au lieu de «\u00A0<html>\u00A0»). Vérifiez également que vous n\'écrivez pas du code HTML dans un fichier CSS.'
+      : 'In CSS, write the tag name directly without "<" and ">" (e.g. use "html" instead of "<html>"). Also, ensure you are not accidentally writing HTML code inside a CSS file.'
+  }),
+
   unrecognizedProperty: (lang: Language, prop: string) => ({
     message: lang === 'fr'
       ? `La propriété «\u00A0${prop}\u00A0» n'est pas reconnue.`
